@@ -1,0 +1,15 @@
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.AssemblyInfoInputs.cache
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.AssemblyInfo.cs
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.csproj.CoreCompileInputs.cache
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.sourcelink.json
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\bin\Debug\net10.0\MarsvilleAgent.exe
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\bin\Debug\net10.0\MarsvilleAgent.deps.json
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\bin\Debug\net10.0\MarsvilleAgent.runtimeconfig.json
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\bin\Debug\net10.0\MarsvilleAgent.dll
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\bin\Debug\net10.0\MarsvilleAgent.pdb
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.dll
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\refint\MarsvilleAgent.dll
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.pdb
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\MarsvilleAgent.genruntimeconfig.cache
+C:\Users\henning.markussen\RiderProjects\mars-mushrooms\MarsvilleAgent\obj\Debug\net10.0\ref\MarsvilleAgent.dll

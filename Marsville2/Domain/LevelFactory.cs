@@ -1,0 +1,481 @@
+using Marsville2.Domain.Cells;
+using Marsville2.Domain.Entities;
+using Marsville2.Domain.Items;
+
+namespace Marsville2.Domain;
+
+/// <summary>
+/// Builds a Board for a given level and seed.
+/// The same seed always produces the same board layout.
+/// Levels 1-5 are 1-row corridors (East/West + Jump).
+/// Levels 6-10 are full 2D grids (N/S/E/W + Jump).
+/// </summary>
+public static class LevelFactory
+{
+    public static Board CreateBoard(int level, int seed) => level switch
+    {
+        1 => CreateLevel1(seed),
+        2 => CreateLevel2(seed),
+        3 => CreateLevel3(seed),
+        4 => CreateLevel4(seed),
+        5 => CreateLevel5(seed),
+        6 => CreateLevel6(seed),
+        7 => CreateLevel7(seed),
+        8 => CreateLevel8(seed),
+        9 => CreateLevel9(seed),
+        10 => CreateLevel10(seed),
+        _ => throw new ArgumentOutOfRangeException(nameof(level), $"Level {level} is not defined.")
+    };
+
+    // ------------------------------------------------------------------ helpers
+
+    private static CellBase[] BuildCorridor(int width, Action<CellBase[]> configure)
+    {
+        var cells = new CellBase[width];
+        for (int x = 0; x < width; x++)
+            cells[x] = new FloorCell(x, 0);
+        cells[0] = new FloorCell(0, 0); // start
+        cells[width - 1] = new GoalCell(width - 1, 0);
+        configure(cells);
+        return cells;
+    }
+
+    private static CellBase[] BuildGrid(int width, int height, Action<CellBase[,]> configure)
+    {
+        var grid = new CellBase[height, width];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                grid[y, x] = new FloorCell(x, y);
+
+        configure(grid);
+
+        var flat = new CellBase[width * height];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                flat[y * width + x] = grid[y, x];
+        return flat;
+    }
+
+    // random offset within [min, max] that is deterministic given seed+level
+    private static int SeededOffset(int seed, int level, int min, int max)
+    {
+        var rng = new Random(seed ^ (level * 397));
+        return rng.Next(min, max + 1);
+    }
+
+    // ------------------------------------------------------------------ Level 1
+    // Straight corridor, no obstacles, no coins. Warm-up.
+    private static Board CreateLevel1(int seed)
+    {
+        const int width = 12;
+        var cells = BuildCorridor(width, _ => { });
+        return new Board(width, 1, 1, cells);
+    }
+
+    // ------------------------------------------------------------------ Level 2
+    // Corridor with one HoleCell to jump over.
+    private static Board CreateLevel2(int seed)
+    {
+        const int width = 14;
+        int holeX = SeededOffset(seed, 2, 3, 8);
+        var cells = BuildCorridor(width, c =>
+        {
+            c[holeX] = new HoleCell(holeX, 0);
+        });
+        return new Board(width, 1, 2, cells);
+    }
+
+    // ------------------------------------------------------------------ Level 3
+    // Jump (hole) + crawl (low obstacle) + 1 mushroom
+    private static Board CreateLevel3(int seed)
+    {
+        const int width = 16;
+        int holeX = SeededOffset(seed, 3, 2, 5);
+        int crawlX = SeededOffset(seed, 31, 8, 12);
+        int mushroomX = SeededOffset(seed, 32, 6, 7);
+
+        var cells = BuildCorridor(width, c =>
+        {
+            c[holeX] = new HoleCell(holeX, 0);
+            c[crawlX] = new LowObstacleCell(crawlX, 0);
+            c[mushroomX].Items.Add(new Mushroom());
+        });
+        return new Board(width, 1, 3, cells);
+    }
+
+    // ------------------------------------------------------------------ Level 4
+    // Bridge gap (3 BrokenBridge) + planks/nails on floor + 1 mushroom
+    private static Board CreateLevel4(int seed)
+    {
+        const int width = 18;
+        int bridgeStart = SeededOffset(seed, 4, 5, 9);
+        int mushroomX = SeededOffset(seed, 41, 2, 4);
+        // Planks and nails are placed before the bridge gap
+        int plankX = SeededOffset(seed, 42, 1, bridgeStart - 2);
+        int nailX = plankX == 1 ? 2 : 1;
+
+        var cells = BuildCorridor(width, c =>
+        {
+            for (int i = 0; i < 3; i++)
+                c[bridgeStart + i] = new BrokenBridgeCell(bridgeStart + i, 0);
+            c[plankX].Items.Add(new Plank());
+            c[nailX].Items.Add(new Nail());
+            c[mushroomX].Items.Add(new Mushroom());
+        });
+        return new Board(width, 1, 4, cells);
+    }
+
+    // ------------------------------------------------------------------ Level 5
+    // Same as level 4 but vision radius = 3
+    private static Board CreateLevel5(int seed)
+    {
+        const int width = 20;
+        int bridgeStart = SeededOffset(seed, 5, 6, 11);
+        int mushroomX = SeededOffset(seed, 51, 2, 4);
+        int plankX = SeededOffset(seed, 52, 1, bridgeStart - 2);
+        int nailX = plankX == 1 ? 2 : 1;
+
+        var cells = BuildCorridor(width, c =>
+        {
+            for (int i = 0; i < 3; i++)
+                c[bridgeStart + i] = new BrokenBridgeCell(bridgeStart + i, 0);
+            c[plankX].Items.Add(new Plank());
+            c[nailX].Items.Add(new Nail());
+            c[mushroomX].Items.Add(new Mushroom());
+        });
+        return new Board(width, 1, 5, cells, visionRadius: 3);
+    }
+
+    // ------------------------------------------------------------------ Level 6
+    // Full 2D grid: walled corridors, bridge gap + low obstacle + vision=3, no mushrooms
+    //
+    //  Layout (12 x 10, S=start, G=goal, W=wall, B=broken bridge, L=low obstacle)
+    //
+    //  W W W W W W W W W W W W
+    //  W S . . W . . . . . . W
+    //  W . W . W . W W W W . W
+    //  W . W . . . W . . . . W   <- plank @ (3,3), nail @ (1,3)
+    //  W . W W W B B B W . . W   <- bridge gap cols 5-7
+    //  W . . . . . . . W . . W
+    //  W W W W . W W . W . . W
+    //  W . . . . . W L L L . W   <- low obstacle cols 7-9
+    //  W . W W W . . . . . . W
+    //  W W W W W W W W W W W G
+    //
+    private static Board CreateLevel6(int seed)
+    {
+        const int width = 12, height = 10;
+
+        var flat = BuildGrid(width, height, grid =>
+        {
+            // Border walls
+            for (int x = 0; x < width; x++) { grid[0, x] = new WallCell(x, 0); grid[height - 1, x] = new WallCell(x, height - 1); }
+            for (int y = 0; y < height; y++) { grid[y, 0] = new WallCell(0, y); grid[y, width - 1] = new WallCell(width - 1, y); }
+
+            // Goal (bottom-right, inside border)
+            grid[height - 1, width - 1] = new GoalCell(width - 1, height - 1);
+
+            // Internal walls — vertical dividers creating corridors
+            for (int y = 1; y < 6; y++) grid[y, 4] = new WallCell(4, y);   // col-4 divider rows 1-5
+            for (int y = 2; y < 5; y++) grid[y, 2] = new WallCell(2, y);   // col-2 stub rows 2-4
+            for (int y = 2; y < 6; y++) grid[y, 6] = new WallCell(6, y);   // col-6 stub rows 2-5 (partial)
+            grid[2, 7] = new WallCell(7, 2); grid[2, 8] = new WallCell(8, 2); grid[2, 9] = new WallCell(9, 2);
+            for (int y = 4; y < 9; y++) grid[y, 8] = new WallCell(8, y);   // col-8 divider rows 4-8
+            grid[6, 1] = new WallCell(1, 6); grid[6, 2] = new WallCell(2, 6); grid[6, 3] = new WallCell(3, 6);
+            grid[6, 5] = new WallCell(5, 6); grid[6, 6] = new WallCell(6, 6);
+            grid[8, 2] = new WallCell(2, 8); grid[8, 3] = new WallCell(3, 8); grid[8, 4] = new WallCell(4, 8);
+
+            // Bridge gap across row 4 (bridging the col-4 divider gap)
+            grid[4, 5] = new BrokenBridgeCell(5, 4);
+            grid[4, 6] = new BrokenBridgeCell(6, 4);
+            grid[4, 7] = new BrokenBridgeCell(7, 4);
+
+            // Materials placed on the west side of the divider
+            grid[3, 3].Items.Add(new Plank());
+            grid[3, 1].Items.Add(new Nail());
+
+            // Low obstacle tunnel on row 7
+            grid[7, 7] = new LowObstacleCell(7, 7);
+            grid[7, 8] = new LowObstacleCell(8, 7);
+            grid[7, 9] = new LowObstacleCell(9, 7);
+        });
+
+        return new Board(width, height, 6, flat, visionRadius: 3);
+    }
+
+    // ------------------------------------------------------------------ Level 7
+    // Full 2D + walled corridors + bridge + crawl + vision=3 + 2 mushrooms
+    //
+    //  Layout (14 x 12, S=start top-left inside walls, G=goal bottom-right)
+    //
+    //  W W W W W W W W W W W W W W
+    //  W S . . . . W . . . . . . W
+    //  W W W W . . W . . M . . . W   <- mushroom at (9,2)
+    //  W . . . . . . . W W W W . W
+    //  W . W W W W . . W . p . . W   <- plank @ (10,4)
+    //  W . W B B B B . W . n . . W   <- bridge cols 3-6, nail @ (10,5)
+    //  W . W . . . . . . . . . . W
+    //  W . . . . W W L L L L W . W   <- low obstacle cols 7-10
+    //  W W W W . . . . . . . W . W
+    //  W . . . . W . . . . . . . W
+    //  W . . M . . . . . W W W . W   <- mushroom at (3,10)
+    //  W W W W W W W W W W W W W G
+    //
+    private static Board CreateLevel7(int seed)
+    {
+        const int width = 14, height = 12;
+
+        var flat = BuildGrid(width, height, grid =>
+        {
+            // Border walls
+            for (int x = 0; x < width; x++) { grid[0, x] = new WallCell(x, 0); grid[height - 1, x] = new WallCell(x, height - 1); }
+            for (int y = 0; y < height; y++) { grid[y, 0] = new WallCell(0, y); grid[y, width - 1] = new WallCell(width - 1, y); }
+
+            grid[height - 1, width - 1] = new GoalCell(width - 1, height - 1);
+
+            // Horizontal wall blocking early right-side shortcut
+            grid[2, 1] = new WallCell(1, 2); grid[2, 2] = new WallCell(2, 2);
+            grid[2, 3] = new WallCell(3, 2); grid[2, 4] = new WallCell(4, 2);
+
+            // Vertical divider splitting the board
+            for (int y = 1; y < 6; y++) grid[y, 6] = new WallCell(6, y);
+            for (int y = 3; y < 9; y++) grid[y, 8] = new WallCell(8, y);
+
+            // L-shaped wall creating a pocket on the west side
+            grid[4, 2] = new WallCell(2, 4); grid[4, 3] = new WallCell(3, 4);
+            grid[4, 4] = new WallCell(4, 4); grid[4, 5] = new WallCell(5, 4);
+
+            // Bridge gap on row 5 across the pocket exit
+            grid[5, 3] = new BrokenBridgeCell(3, 5);
+            grid[5, 4] = new BrokenBridgeCell(4, 5);
+            grid[5, 5] = new BrokenBridgeCell(5, 5);
+            grid[5, 6] = new BrokenBridgeCell(6, 5); // spans the divider
+
+            // Materials in the pocket
+            grid[4, 10].Items.Add(new Plank());
+            grid[5, 10].Items.Add(new Nail());
+
+            // Lower mid section walls
+            grid[7, 5] = new WallCell(5, 7); grid[7, 6] = new WallCell(6, 7);
+            grid[7, 12] = new WallCell(12, 7);
+            grid[8, 1] = new WallCell(1, 8); grid[8, 2] = new WallCell(2, 8);
+            grid[8, 3] = new WallCell(3, 8); grid[8, 4] = new WallCell(4, 8);
+            for (int y = 8; y < 12; y++) grid[y, 11] = new WallCell(11, y);
+            grid[9, 5] = new WallCell(5, 9);
+
+            // Low obstacle across row 7
+            grid[7, 7] = new LowObstacleCell(7, 7);
+            grid[7, 8] = new LowObstacleCell(8, 7);
+            grid[7, 9] = new LowObstacleCell(9, 7);
+            grid[7, 10] = new LowObstacleCell(10, 7);
+
+            // Mushrooms
+            grid[2, 9].Items.Add(new Mushroom());
+            grid[10, 3].Items.Add(new Mushroom());
+        });
+
+        return new Board(width, height, 7, flat, visionRadius: 3);
+    }
+
+    // ------------------------------------------------------------------ Level 8
+    // Same walled map as level 7 + enemies patrolling the corridors, player has 2 lives
+    private static Board CreateLevel8(int seed)
+    {
+        const int width = 14, height = 12;
+
+        var flat = BuildGrid(width, height, grid =>
+        {
+            // Border walls
+            for (int x = 0; x < width; x++) { grid[0, x] = new WallCell(x, 0); grid[height - 1, x] = new WallCell(x, height - 1); }
+            for (int y = 0; y < height; y++) { grid[y, 0] = new WallCell(0, y); grid[y, width - 1] = new WallCell(width - 1, y); }
+
+            grid[height - 1, width - 1] = new GoalCell(width - 1, height - 1);
+
+            // Same internal structure as level 7
+            grid[2, 1] = new WallCell(1, 2); grid[2, 2] = new WallCell(2, 2);
+            grid[2, 3] = new WallCell(3, 2); grid[2, 4] = new WallCell(4, 2);
+
+            for (int y = 1; y < 6; y++) grid[y, 6] = new WallCell(6, y);
+            for (int y = 3; y < 9; y++) grid[y, 8] = new WallCell(8, y);
+
+            grid[4, 2] = new WallCell(2, 4); grid[4, 3] = new WallCell(3, 4);
+            grid[4, 4] = new WallCell(4, 4); grid[4, 5] = new WallCell(5, 4);
+
+            grid[5, 3] = new BrokenBridgeCell(3, 5);
+            grid[5, 4] = new BrokenBridgeCell(4, 5);
+            grid[5, 5] = new BrokenBridgeCell(5, 5);
+            grid[5, 6] = new BrokenBridgeCell(6, 5);
+
+            grid[4, 10].Items.Add(new Plank());
+            grid[5, 10].Items.Add(new Nail());
+
+            grid[7, 5] = new WallCell(5, 7); grid[7, 6] = new WallCell(6, 7);
+            grid[7, 12] = new WallCell(12, 7);
+            grid[8, 1] = new WallCell(1, 8); grid[8, 2] = new WallCell(2, 8);
+            grid[8, 3] = new WallCell(3, 8); grid[8, 4] = new WallCell(4, 8);
+            for (int y = 8; y < 12; y++) grid[y, 11] = new WallCell(11, y);
+            grid[9, 5] = new WallCell(5, 9);
+
+            grid[7, 7] = new LowObstacleCell(7, 7);
+            grid[7, 8] = new LowObstacleCell(8, 7);
+            grid[7, 9] = new LowObstacleCell(9, 7);
+            grid[7, 10] = new LowObstacleCell(10, 7);
+
+            grid[2, 9].Items.Add(new Mushroom());
+            grid[10, 3].Items.Add(new Mushroom());
+        });
+
+        var board = new Board(width, height, 8, flat, visionRadius: 3);
+
+        // Enemies patrolling corridors — placed at walkable spots the agent must pass through
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 9, 1));  // upper-right corridor
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 7, 6));  // mid corridor east of bridge
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 5, 9));  // lower-left corridor
+
+        return board;
+    }
+
+    // ------------------------------------------------------------------ Level 9
+    // Shared 2D grid with walled corridors + multiple zones, all players, enemies, pooled mushrooms
+    //
+    //  18 x 16 board.  Three distinct zones connected by two chokepoints:
+    //   Zone A (top-left)  : start area, materials, 1st chokepoint = bridge gap
+    //   Zone B (mid)       : open-ish area with a low-obstacle wall, enemies patrol
+    //   Zone C (bottom-right): final stretch to goal
+    //
+    private static Board CreateLevel9(int seed)
+    {
+        const int width = 18, height = 16;
+
+        var flat = BuildGrid(width, height, grid =>
+        {
+            // Border walls
+            for (int x = 0; x < width; x++) { grid[0, x] = new WallCell(x, 0); grid[height - 1, x] = new WallCell(x, height - 1); }
+            for (int y = 0; y < height; y++) { grid[y, 0] = new WallCell(0, y); grid[y, width - 1] = new WallCell(width - 1, y); }
+
+            grid[height - 1, width - 1] = new GoalCell(width - 1, height - 1);
+
+            // ── Zone divider A/B: vertical wall col 6 rows 1-9, gap at row 6 (bridge)
+            for (int y = 1; y < 10; y++)
+                if (y != 6) grid[y, 6] = new WallCell(6, y);
+
+            // Bridge gap spanning the chokepoint at row 6 col 6-8
+            grid[6, 6] = new BrokenBridgeCell(6, 6);
+            grid[6, 7] = new BrokenBridgeCell(7, 6);
+            grid[6, 8] = new BrokenBridgeCell(8, 6);
+
+            // Materials scattered in Zone A
+            grid[4, 2].Items.Add(new Plank());
+            grid[2, 4].Items.Add(new Nail());
+            grid[7, 4].Items.Add(new Plank()); // second set for multiple players
+            grid[8, 2].Items.Add(new Nail());
+
+            // Internal walls in Zone A giving it texture
+            grid[2, 2] = new WallCell(2, 2); grid[2, 3] = new WallCell(3, 2);
+            grid[3, 4] = new WallCell(4, 3); grid[3, 5] = new WallCell(5, 3);
+            grid[5, 1] = new WallCell(1, 5); grid[5, 2] = new WallCell(2, 5);
+            grid[9, 2] = new WallCell(2, 9); grid[9, 3] = new WallCell(3, 9);
+            grid[9, 4] = new WallCell(4, 9); grid[9, 5] = new WallCell(5, 9);
+
+            // ── Zone divider B/C: horizontal wall row 11 cols 7-15, gap at col 12 (low obstacle)
+            for (int x = 7; x < 16; x++)
+                grid[11, x] = new WallCell(x, 11);
+            // Gap at cols 11-13 filled with low obstacles (crawl through)
+            grid[11, 11] = new LowObstacleCell(11, 11);
+            grid[11, 12] = new LowObstacleCell(12, 11);
+            grid[11, 13] = new LowObstacleCell(13, 11);
+
+            // Internal walls in Zone B
+            grid[7, 9] = new WallCell(9, 7); grid[7, 10] = new WallCell(10, 7);
+            grid[8, 9] = new WallCell(9, 8);
+            grid[9, 13] = new WallCell(13, 9); grid[9, 14] = new WallCell(14, 9);
+            grid[10, 7] = new WallCell(7, 10); grid[10, 8] = new WallCell(8, 10);
+
+            // Internal walls in Zone C
+            grid[12, 8] = new WallCell(8, 12); grid[12, 9] = new WallCell(9, 12);
+            grid[13, 10] = new WallCell(10, 13); grid[13, 11] = new WallCell(11, 13);
+            for (int x = 13; x < 17; x++) grid[14, x] = new WallCell(x, 14);
+
+            // Mushrooms spread across all three zones
+            grid[1, 3].Items.Add(new Mushroom());   // Zone A
+            grid[9, 1].Items.Add(new Mushroom());   // Zone A low
+            grid[7, 11].Items.Add(new Mushroom());  // Zone B
+            grid[10, 14].Items.Add(new Mushroom()); // Zone B far
+            grid[13, 7].Items.Add(new Mushroom());  // Zone C
+            grid[12, 15].Items.Add(new Mushroom()); // Zone C far
+        });
+
+        var board = new Board(width, height, 9, flat, visionRadius: 3);
+        // Enemies in Zone B guarding the approach
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 10, 7));
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 15, 8));
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 8, 10));
+        board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), 14, 13)); // Zone C
+
+        return board;
+    }
+
+    // ------------------------------------------------------------------ Level 10
+    // Battle royale — shared board, shrinking ring, #coins = #players at start.
+    // Four-quadrant arena with a central plaza and internal walls creating lanes.
+    // Coins and player count seeded by GameService.
+    private static Board CreateLevel10(int seed)
+    {
+        const int width = 22, height = 22;
+
+        var flat = BuildGrid(width, height, grid =>
+        {
+            // No fixed goal — last player alive wins
+            // Mushrooms (coins) are placed by GameService based on player count
+
+            // Border walls
+            for (int x = 0; x < width; x++) { grid[0, x] = new WallCell(x, 0); grid[height - 1, x] = new WallCell(x, height - 1); }
+            for (int y = 0; y < height; y++) { grid[y, 0] = new WallCell(0, y); grid[y, width - 1] = new WallCell(width - 1, y); }
+
+            // ── Cross-shaped inner walls dividing arena into 4 quadrants
+            //    Horizontal bar: row 10, cols 2-9 and 12-19 (gap in center)
+            for (int x = 2; x < 10; x++) grid[10, x] = new WallCell(x, 10);
+            for (int x = 12; x < 20; x++) grid[10, x] = new WallCell(x, 10);
+            //    Vertical bar: col 10, rows 2-9 and 12-19 (gap in center)
+            for (int y = 2; y < 10; y++) grid[y, 10] = new WallCell(10, y);
+            for (int y = 12; y < 20; y++) grid[y, 10] = new WallCell(10, y);
+
+            // ── Per-quadrant internal walls (secondary chokepoints)
+            // Top-left quadrant
+            grid[3, 3] = new WallCell(3, 3); grid[3, 4] = new WallCell(4, 3); grid[3, 5] = new WallCell(5, 3);
+            grid[5, 6] = new WallCell(6, 5); grid[5, 7] = new WallCell(7, 5); grid[5, 8] = new WallCell(8, 5);
+            grid[7, 2] = new WallCell(2, 7); grid[7, 3] = new WallCell(3, 7); grid[7, 4] = new WallCell(4, 7);
+            // Top-right quadrant
+            grid[3, 13] = new WallCell(13, 3); grid[3, 14] = new WallCell(14, 3); grid[3, 15] = new WallCell(15, 3);
+            grid[5, 12] = new WallCell(12, 5); grid[5, 13] = new WallCell(13, 5);
+            grid[8, 17] = new WallCell(17, 8); grid[8, 18] = new WallCell(18, 8); grid[8, 19] = new WallCell(19, 8);
+            grid[6, 15] = new WallCell(15, 6); grid[6, 16] = new WallCell(16, 6); grid[6, 17] = new WallCell(17, 6);
+            // Bottom-left quadrant
+            grid[13, 2] = new WallCell(2, 13); grid[13, 3] = new WallCell(3, 13); grid[13, 4] = new WallCell(4, 13);
+            grid[15, 6] = new WallCell(6, 15); grid[15, 7] = new WallCell(7, 15); grid[15, 8] = new WallCell(8, 15);
+            grid[17, 3] = new WallCell(3, 17); grid[17, 4] = new WallCell(4, 17);
+            grid[18, 6] = new WallCell(6, 18); grid[18, 7] = new WallCell(7, 18); grid[18, 8] = new WallCell(8, 18);
+            // Bottom-right quadrant
+            grid[13, 16] = new WallCell(16, 13); grid[13, 17] = new WallCell(17, 13); grid[13, 18] = new WallCell(18, 13);
+            grid[16, 12] = new WallCell(12, 16); grid[16, 13] = new WallCell(13, 16); grid[16, 14] = new WallCell(14, 16);
+            grid[18, 14] = new WallCell(14, 18); grid[18, 15] = new WallCell(15, 18); grid[18, 16] = new WallCell(16, 18);
+
+            // ── Low obstacles in crossing lanes (aggression chokepoints)
+            grid[10, 10] = new LowObstacleCell(10, 10); // central crossing
+            for (int x = 4; x < 7; x++) grid[6, x] = new LowObstacleCell(x, 6);
+            for (int x = 15; x < 18; x++) grid[15, x] = new LowObstacleCell(x, 15);
+
+            // ── Bridge gaps (require materials to cross)
+            grid[4, 11] = new BrokenBridgeCell(11, 4); grid[4, 12] = new BrokenBridgeCell(12, 4);
+            grid[16, 8] = new BrokenBridgeCell(8, 16); grid[16, 9] = new BrokenBridgeCell(9, 16);
+
+            // Materials scattered in all quadrants
+            grid[3, 8].Items.Add(new Plank()); grid[3, 9].Items.Add(new Nail());
+            grid[17, 11].Items.Add(new Plank()); grid[17, 12].Items.Add(new Nail());
+            grid[8, 3].Items.Add(new Plank()); grid[9, 3].Items.Add(new Nail());
+            grid[12, 18].Items.Add(new Plank()); grid[13, 18].Items.Add(new Nail());
+        });
+
+        return new Board(width, height, 10, flat, visionRadius: 3);
+    }
+}
