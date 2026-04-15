@@ -1,12 +1,14 @@
 import type { BoardStateDto } from '../types/game';
 import Cell from './Cell';
+import CellEffectsCanvas from './CellEffectsCanvas';
+import EntityCanvas from './EntityCanvas';
 
 interface BoardGridProps {
   board: BoardStateDto;
 }
 
 export default function BoardGrid({ board }: BoardGridProps) {
-  const { visibleCells, boardWidth, boardHeight, x: px, y: py } = board;
+  const { visibleCells, boardWidth, boardHeight } = board;
 
   // Build a lookup map: "x,y" -> CellDto
   const cellMap = new Map(visibleCells.map(c => [`${c.x},${c.y}`, c]));
@@ -21,7 +23,7 @@ export default function BoardGrid({ board }: BoardGridProps) {
         <span className="font-bold text-orange-200 text-sm">
           👨‍🚀 {board.teamName}
         </span>
-        <span className="text-orange-300 text-xs">Level {board.level}</span>
+        <span className="text-orange-300 text-xs">Level {board.level} — {board.levelName}</span>
         <span className="text-orange-300 text-xs">🍄 {board.mushroomsCollected}</span>
         <span className="text-orange-300 text-xs">
           ❤️ {Array.from({ length: board.maxHealth }, (_, i) => (
@@ -33,12 +35,13 @@ export default function BoardGrid({ board }: BoardGridProps) {
           🎒 [{board.backpack.join(', ')}]
         </span>
       </div>
-      <div className="inline-flex flex-col border border-orange-800">
+      <div className="relative inline-flex flex-col border border-orange-800">
+        <CellEffectsCanvas board={board} />
+        <EntityCanvas board={board} />
         {rows.map((row, ri) => (
           <div key={ri} className="flex">
             {row.map(({ col, row: rowIdx }) => {
               const cell = cellMap.get(`${col},${rowIdx}`);
-              const isPlayerPos = col === px && rowIdx === py;
               if (!cell) {
                 // Fog of war
                 return (
@@ -48,7 +51,7 @@ export default function BoardGrid({ board }: BoardGridProps) {
                   />
                 );
               }
-              return <Cell key={col} cell={cell} isPlayerPos={isPlayerPos} />;
+              return <Cell key={col} cell={cell} hideEntity />;
             })}
           </div>
         ))}

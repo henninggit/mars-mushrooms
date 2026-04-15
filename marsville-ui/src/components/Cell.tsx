@@ -3,6 +3,7 @@ import type { CellDto } from '../types/game';
 interface CellProps {
   cell: CellDto;
   isPlayerPos?: boolean;
+  hideEntity?: boolean;
 }
 
 const CELL_ICONS: Record<string, string> = {
@@ -31,13 +32,13 @@ const ITEM_ICONS: Record<string, string> = {
   nail: '📌',
 };
 
-export default function Cell({ cell, isPlayerPos }: CellProps) {
+export default function Cell({ cell, isPlayerPos, hideEntity }: CellProps) {
   const bg = CELL_BG[cell.cellType] ?? 'bg-orange-300';
   const topIcon = CELL_ICONS[cell.cellType];
 
-  const entityIcon = cell.entity
+  const entityIcon = !hideEntity && (cell.entity
     ? cell.entity.entityType === 'enemy' ? '👾' : '👨‍🚀'
-    : isPlayerPos ? '👨‍🚀' : null;
+    : isPlayerPos ? '👨‍🚀' : null);
 
   return (
     <div

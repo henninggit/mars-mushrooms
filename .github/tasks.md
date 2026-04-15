@@ -9,5 +9,7 @@ A list of tasks.
 - [ ] Ensure maze-like constructs and "columns" can be generated in levels
 - [ ] Sikre at hosting funker med Per Frode
 - [ ] Sikre spesielt at slåss mot hverandre funker
-- [ ] Add basic movement animations so it is easier to track what happens
+- [x] Add basic movement animations so it is easier to track what happens
+- [ ] Ensure interaction animations look good
 - [ ] Add a "shield" that negates one attack
+- [x] Add level names which get displayed in the UI which sets the tone for the level

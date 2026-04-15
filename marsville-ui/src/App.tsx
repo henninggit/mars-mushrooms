@@ -54,7 +54,7 @@ function App() {
           <h1 className="text-xl font-bold text-orange-300">Marsville &mdash; Mushrooms on Mars</h1>
           {currentRound && (
             <span className="text-sm text-orange-400 ml-2">
-              Level {currentRound.level} &middot; {currentRound.phase}
+              Level {currentRound.level} &mdash; {currentRound.levelName} &middot; {currentRound.phase}
             </span>
           )}
         </div>
@@ -73,7 +73,17 @@ function App() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main board area */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto flex flex-col">
+          {currentRound && (
+            <div className="px-6 pt-4 pb-2">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-orange-200 tracking-tight">
+                  {currentRound.levelName}
+                </span>
+                <span className="text-orange-500 text-sm font-medium">Level {currentRound.level}</span>
+              </div>
+            </div>
+          )}
           <AllBoards boards={boardList} />
         </main>
 

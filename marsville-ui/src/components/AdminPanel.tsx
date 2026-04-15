@@ -2,6 +2,19 @@ import { useState } from 'react';
 
 const API_BASE = '/api/admin';
 
+const LEVEL_NAMES: Record<number, string> = {
+  1: 'Dust & Boots',
+  2: 'Mind the Gap',
+  3: 'Duck and Dash',
+  4: 'Bridge Builders',
+  5: 'Blind Repair',
+  6: 'Labyrinth of Dust',
+  7: 'Spore Highway',
+  8: 'Hostile Corridors',
+  9: 'Colony Convergence',
+  10: 'Last Spore Standing',
+};
+
 interface AdminPanelProps {
   onRoundStarted?: () => void;
 }
@@ -75,6 +88,9 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
             onChange={e => setLevel(parseInt(e.target.value, 10) || 1)}
             className="mt-1 w-full bg-stone-800 border border-orange-800 rounded px-2 py-1 text-orange-100 text-sm"
           />
+          {LEVEL_NAMES[level] && (
+            <span className="block mt-0.5 text-xs text-orange-400 italic">{LEVEL_NAMES[level]}</span>
+          )}
         </label>
         <label className="flex-1 block text-sm text-orange-300">
           Timeout (s)

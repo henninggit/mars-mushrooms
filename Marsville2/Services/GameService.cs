@@ -336,7 +336,8 @@ public class GameService
             VisibleCells = visibleCells,
             BoardWidth = board.Width,
             BoardHeight = board.Height,
-            Level = board.Level
+            Level = board.Level,
+            LevelName = LevelFactory.GetLevelName(board.Level)
         };
     }
 
@@ -344,6 +345,7 @@ public class GameService
     {
         round.RoundId,
         round.Level,
+        LevelName = LevelFactory.GetLevelName(round.Level),
         round.Seed,
         round.TimeoutSeconds,
         Phase = round.Phase.ToString()
@@ -369,6 +371,7 @@ public class GameService
         {
             r.RoundId,
             r.Level,
+            LevelName = LevelFactory.GetLevelName(r.Level),
             r.StartedAt,
             r.EndedAt,
             Scores = r.RoundScores

@@ -27,6 +27,22 @@ public static class LevelFactory
         _ => throw new ArgumentOutOfRangeException(nameof(level), $"Level {level} is not defined.")
     };
 
+    /// <summary>Returns the thematic name for a given level number.</summary>
+    public static string GetLevelName(int level) => level switch
+    {
+        1 => "Dust & Boots",
+        2 => "Mind the Gap",
+        3 => "Duck and Dash",
+        4 => "Bridge Builders",
+        5 => "Blind Repair",
+        6 => "Labyrinth of Dust",
+        7 => "Spore Highway",
+        8 => "Hostile Corridors",
+        9 => "Colony Convergence",
+        10 => "Last Spore Standing",
+        _ => $"Level {level}"
+    };
+
     // ------------------------------------------------------------------ helpers
 
     private static CellBase[] BuildCorridor(int width, Action<CellBase[]> configure)

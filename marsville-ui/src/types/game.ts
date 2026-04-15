@@ -22,11 +22,13 @@ export interface BoardStateDto {
   boardWidth: number;
   boardHeight: number;
   level: number;
+  levelName: string;
 }
 
 export interface RoundInfo {
   roundId: string;
   level: number;
+  levelName: string;
   seed: number;
   timeoutSeconds: number;
   phase: 'Registration' | 'Playing' | 'Ended';
