@@ -61,9 +61,9 @@ public class GameService
             {
                 var board = LevelFactory.CreateBoard(round.Level, round.Seed);
 
-                // For level 10 seed mushrooms equal to player count
-                if (round.Level == 10)
-                    SeedLevel10Mushrooms(board, _session.Players.Count);
+                // For level 11 seed mushrooms equal to player count
+                if (round.Level == 11)
+                    SeedLevel11Mushrooms(board, _session.Players.Count);
 
                 round.SetSharedBoard(board);
                 var svc = new BoardService(board);
@@ -72,7 +72,7 @@ public class GameService
                 int idx = 0;
                 foreach (var (playerId, player) in _session.Players)
                 {
-                    var maxHealth = round.Level == 10 ? 3 : 2;
+                    var maxHealth = round.Level == 11 ? 3 : 2;
                     var boardPlayer = new Player(playerId, player.TeamName, player.Token,
                         1 + idx * 2, 1, maxHealth);
                     board.AddPlayer(boardPlayer);
@@ -85,7 +85,8 @@ public class GameService
                 foreach (var (playerId, player) in _session.Players)
                 {
                     var board = LevelFactory.CreateBoard(round.Level, round.Seed);
-                    var boardPlayer = new Player(playerId, player.TeamName, player.Token, 0, 0);
+                    var boardPlayer = new Player(playerId, player.TeamName, player.Token,
+                        board.StartX, board.StartY);
                     board.AddPlayer(boardPlayer);
                     round.AssignPlayerBoard(playerId, board);
                     _boardServices[playerId] = new BoardService(board);
@@ -94,7 +95,7 @@ public class GameService
 
             round.Start();
 
-            if (round.Level == 10)
+            if (round.Level == 11)
                 StartShrinkTimer();
 
             // Setup auto-end on timeout
@@ -176,9 +177,9 @@ public class GameService
                 round.RoundScores.GetValueOrDefault(sessionPlayer.Id) + 1;
         }
 
-        // Check level 10 kill / survivor scoring
-        if (round.Level == 10 && !boardPlayer.IsAlive)
-            HandleLevel10Death(round, sessionPlayer.Id);
+        // Check level 11 kill / survivor scoring
+        if (round.Level == 11 && !boardPlayer.IsAlive)
+            HandleLevel11Death(round, sessionPlayer.Id);
 
         // Broadcast updated state
         var stateDto = BuildStateDto(board, boardPlayer);
@@ -208,7 +209,7 @@ public class GameService
 
     // ------------------------------------------------------------------ Level 10 logic
 
-    private void SeedLevel10Mushrooms(Board board, int playerCount)
+    private void SeedLevel11Mushrooms(Board board, int playerCount)
     {
         var rng = new Random();
         int placed = 0;
@@ -227,7 +228,7 @@ public class GameService
         }
     }
 
-    private void HandleLevel10Death(GameRound round, string deadPlayerId)
+    private void HandleLevel11Death(GameRound round, string deadPlayerId)
     {
         int aliveCount = round.SharedBoard?.Players.Count(p => p.IsAlive) ?? 0;
         var scores = round.RoundScores;
@@ -254,7 +255,7 @@ public class GameService
         _shrinkTimer = new Timer(_ =>
         {
             var round = _session.CurrentRound;
-            if (round?.Level == 10 && round.Phase == RoundPhase.Playing)
+            if (round?.Level == 11 && round.Phase == RoundPhase.Playing)
             {
                 round.SharedBoard?.ShrinkBorder();
                 _ = BroadcastAllBoards();
@@ -292,7 +293,7 @@ public class GameService
 
     private void FinalizeScores(GameRound round)
     {
-        if (round.Level == 10) return; // scored dynamically during play
+        if (round.Level == 11) return; // scored dynamically during play
 
         foreach (var (playerId, board) in round.PlayerBoards)
         {

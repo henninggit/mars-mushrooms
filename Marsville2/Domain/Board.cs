@@ -15,6 +15,9 @@ public class Board
     public int Height { get; }
     public int Level { get; }
     public int VisionRadius { get; }   // 0 = full visibility
+    public int StartX { get; }
+    public int StartY { get; }
+    public bool IsShared { get; }
 
     private readonly CellBase[] _cells;
     private readonly List<Player> _players = new();
@@ -23,12 +26,16 @@ public class Board
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     public IReadOnlyList<Enemy> Enemies => _enemies.AsReadOnly();
 
-    public Board(int width, int height, int level, CellBase[] cells, int visionRadius = 0)
+    public Board(int width, int height, int level, CellBase[] cells,
+        int visionRadius = 0, int startX = 0, int startY = 0, bool isShared = false)
     {
         Width = width;
         Height = height;
         Level = level;
         VisionRadius = visionRadius;
+        StartX = startX;
+        StartY = startY;
+        IsShared = isShared;
         _cells = cells;
     }
 
