@@ -3,7 +3,6 @@
 ################################################################################
 
 /.vs/
-*/obj
-*/bin
-*/Debug
-/MarsvilleAgent/obj/MarsvilleAgent.csproj.nuget.dgspec.json
+**/obj
+**/bin
+**/Debug
