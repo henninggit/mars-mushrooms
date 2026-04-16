@@ -5,13 +5,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>MarsvilleStarter</RootNamespace>
+    <RootNamespace>SmartAgent</RootNamespace>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <!-- Exclude the SmartAgent subfolder from this project's compilation -->
-    <Compile Remove="SmartAgent\**\*.cs" />
+    <ProjectReference Include="..\MarsvilleStarter.csproj" />
   </ItemGroup>
 
 </Project>

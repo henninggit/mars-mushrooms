@@ -15,6 +15,7 @@ public enum CellType
     [JsonStringEnumMemberName("bridge")]        Bridge,
     [JsonStringEnumMemberName("low_obstacle")]  LowObstacle,
     [JsonStringEnumMemberName("goal")]          Goal,
+    [JsonStringEnumMemberName("teleporter")]    Teleporter,
 }
 
 /// <summary>

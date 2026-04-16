@@ -14,7 +14,7 @@ public sealed class GameStateView
     /// <summary>Your team name.</summary>
     public string TeamName { get; }
 
-    /// <summary>Current level number (1–10).</summary>
+    /// <summary>Current level number (1–12).</summary>
     public int Level { get; }
 
     /// <summary>Your current X position (column, 0-based).</summary>
@@ -26,8 +26,13 @@ public sealed class GameStateView
     /// <summary>Your current health points.</summary>
     public int Health { get; }
 
-    /// <summary>Your maximum health points.</summary>
+    /// <summary>Your maximum health points (base + any collected shields).</summary>
     public int MaxHealth { get; }
+
+    /// <summary>
+    /// Number of shields collected this round. Each shield adds +1 to <see cref="MaxHealth"/>.
+    /// </summary>
+    public int ShieldHealth { get; }
 
     /// <summary>Whether the agent is currently crawling through a low obstacle.</summary>
     public bool IsCrawling { get; }
@@ -75,6 +80,7 @@ public sealed class GameStateView
         Y                  = dto.Y;
         Health             = dto.Health;
         MaxHealth          = dto.MaxHealth;
+        ShieldHealth       = dto.ShieldHealth;
         IsCrawling         = dto.IsCrawling;
         MushroomsCollected = dto.MushroomsCollected;
         BoardWidth         = dto.BoardWidth;

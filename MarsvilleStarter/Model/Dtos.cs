@@ -34,6 +34,7 @@ public record GameStateDto(
     [property: JsonPropertyName("y")]                   int           Y,
     [property: JsonPropertyName("health")]              int           Health,
     [property: JsonPropertyName("maxHealth")]           int           MaxHealth,
+    [property: JsonPropertyName("shieldHealth")]        int           ShieldHealth,
     [property: JsonPropertyName("isCrawling")]          bool          IsCrawling,
     [property: JsonPropertyName("mushroomsCollected")]  int           MushroomsCollected,
     [property: JsonPropertyName("backpack")]            List<string>  Backpack,

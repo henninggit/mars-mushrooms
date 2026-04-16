@@ -13,10 +13,9 @@
  *  everything your agent can currently see, and must return a PossibleAction.
  *
  *  Useful GameStateView properties:
- *    state.Level                   — current level number (1–12)
+ *    state.Level                   — current level number (1–10)
  *    state.X / state.Y             — agent's position
  *    state.Health / state.MaxHealth
- *    state.ShieldHealth            — bonus max health from collected shields
  *    state.IsCrawling
  *    state.MushroomsCollected
  *    state.Inventory               — backpack contents ("plank", "nail", ...)
@@ -32,7 +31,7 @@
  *
  *  Cell shorthand properties (on CellView):
  *    cell.IsFloor / .IsHole / .IsWall / .IsBrokenBridge / .IsBridge
- *    cell.IsLowObstacle / .IsGoal / .IsTeleporter / .IsWalkable / .IsJumpable / .IsCrawlable
+ *    cell.IsLowObstacle / .IsGoal / .IsWalkable / .IsJumpable / .IsCrawlable
  *    cell.HasItems / .HasEnemy / .Items / .Entity
  * ───────────────────────────────────────────────────────────────────────────
  */
@@ -43,7 +42,7 @@ using MarsvilleStarter.Model;
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 string teamName = args.Length > 0 ? args[0] : "MyTeam";
-string server   = args.Length > 1 ? args[1] : "http://localhost:5181";
+string server = args.Length > 1 ? args[1] : "http://localhost:5181";
 
 Console.WriteLine($"Marsville Starter  |  team={teamName}  server={server}");
 
@@ -65,6 +64,16 @@ while (true)
     Console.WriteLine($"[{teamName}] Round started — Level {state.Level}. Let's go!");
 
     int lastLevel = state.Level;
+
+    var unvisitedCells = new HashSet<(int, int)>();
+
+    for (var i = 0; i < state.BoardHeight; i++)
+    {
+        for (var j = 0; j < state.BoardWidth; j++)
+        {
+            unvisitedCells.Add((i, j));
+        }
+    }
 
     // ── Play loop for a single round ──────────────────────────────────────
     while (true)
@@ -90,25 +99,22 @@ while (true)
             break;
         }
 
-        var action = ChooseAction(current);
+        var action = ChooseAction(current, unvisitedCells);
+
+        if (action.TargetX != null && action.TargetY != null && unvisitedCells.Contains(((int, int))(action.TargetX, action.TargetY)))
+        {
+            unvisitedCells.Remove(((int, int))(action.TargetX, action.TargetY));
+        }
 
         Console.WriteLine(
             $"[{teamName}] ({current.X},{current.Y}) HP={current.Health}/{current.MaxHealth} " +
-            $"Shield={current.ShieldHealth} Mushrooms={current.MushroomsCollected}  →  {action}");
+            $"Mushrooms={current.MushroomsCollected}  →  {action}");
 
         var result = await client.ExecuteAsync(action);
 
         if (result?.Contains("GoalReached") == true)
         {
-            Console.WriteLine($"[{teamName}] GOAL REACHED! Mushrooms={current.MushroomsCollected}. Waiting for round to end...");
-            // Poll until the round ends before returning to lobby
-            while (true)
-            {
-                await Task.Delay(1000);
-                var endState = await client.GetStateAsync();
-                if (endState is null || endState.Level != lastLevel) break;
-            }
-            Console.WriteLine($"[{teamName}] Round ended. Returning to lobby.");
+            Console.WriteLine($"[{teamName}] GOAL REACHED! Mushrooms={current.MushroomsCollected}.");
             break;
         }
 
@@ -122,23 +128,40 @@ while (true)
 // YOUR AGENT LOGIC GOES HERE
 // Replace the body of this method with your own decision-making code.
 // ──────────────────────────────────────────────────────────────────────────────
-static PossibleAction ChooseAction(GameStateView state)
+static PossibleAction ChooseAction(GameStateView state, HashSet<(int, int)> unvisitedCells)
 {
     // GetPossibleActions() lists every valid action from the current position.
     // Actions toward hidden fog-of-war cells are excluded automatically.
     var options = state.GetPossibleActions();
 
-    // You can also ask "what could I do from any visible cell?" — useful for planning.
-    // var actionsAt = state.GetPossibleActions(x, y);
+    if (options.Where(x => x.ActionType == ActionType.Attack).Any())
+    {
+        return options.First(x => x.ActionType == ActionType.Attack);
+    }
 
-    // Example: prefer moving toward the goal, otherwise take the first available action.
-    var moveToGoal = options.FirstOrDefault(a => a.ActionType == ActionType.Move &&
-        state.GetCell(a.TargetX!.Value, a.TargetY!.Value)?.IsGoal == true);
-    if (moveToGoal is not null) return moveToGoal;
+    if (options.Where(x => x.ActionType == ActionType.Pickup).Any())
+    {
+        return options.First(x => x.ActionType == ActionType.Pickup);
+    }
 
-    var anyMove = options.FirstOrDefault(a => a.ActionType == ActionType.Move);
-    if (anyMove is not null) return anyMove;
+    if (options.Where(x => x.ActionType == ActionType.Build).Any())
+    {
+        return options.First(x => x.ActionType == ActionType.Build);
+    }
 
-    // Fall back to waiting if no better option is available.
-    return options.First(a => a.ActionType == ActionType.Wait);
+    var nonWaitActions = options.Where(x => x.ActionType != ActionType.Wait).ToList();
+
+    var unvisitedActions = nonWaitActions.Where(x => x.TargetY != null && x.TargetY != null && unvisitedCells.Contains(((int, int))(x.TargetX!, x.TargetY!))).ToList();
+
+    Random random = new Random();
+
+    if (unvisitedActions.Any())
+    {
+        var action = unvisitedActions[random.Next(unvisitedActions.Count)];
+        return action;
+    }
+    else
+    {
+        return nonWaitActions[random.Next(0, nonWaitActions.Count)];
+    }
 }

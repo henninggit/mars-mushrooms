@@ -41,9 +41,10 @@ public class CellView
     public bool IsBridge         => CellType == CellType.Bridge;
     public bool IsLowObstacle    => CellType == CellType.LowObstacle;
     public bool IsGoal           => CellType == CellType.Goal;
-    public bool IsWalkable       => CellType is CellType.Floor or CellType.Bridge or CellType.Goal;
+    public bool IsTeleporter     => CellType == CellType.Teleporter;
+    public bool IsWalkable       => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.Teleporter;
     public bool IsJumpable       => CellType == CellType.Hole;
-    public bool IsCrawlable      => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.LowObstacle;
+    public bool IsCrawlable      => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.LowObstacle or CellType.Teleporter;
     public bool HasItems         => Items.Count > 0;
     public bool HasEnemy         => Entity?.IsEnemy == true;
 

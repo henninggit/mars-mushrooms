@@ -110,7 +110,8 @@ static async Task RunAgent(string teamName, string server)
 
             var action = ChooseAction(current);
             Console.WriteLine($"[{teamName}] ({current.X},{current.Y}) HP={current.Health}/{current.MaxHealth} " +
-                              $"Mushrooms={current.MushroomsCollected} -> {action.Verb}({action.Direction?.ToString() ?? "-"})");
+                              $"Shield={current.ShieldHealth} Mushrooms={current.MushroomsCollected} " +
+                              $"-> {action.Verb}({action.Direction?.ToString() ?? "-"})");
 
             var result = await PostAction(http, teamName, action);
             if (result is null) { await Task.Delay(500); continue; }
@@ -184,10 +185,14 @@ static async Task Register(HttpClient http, string teamName)
 static AgentAction ChooseAction(GameState s)
 {
     var cellMap = s.VisibleCells.ToDictionary(c => (c.X, c.Y));
-
-    // Pick up plank or nail from the current cell first
     var here = cellMap.GetValueOrDefault((s.X, s.Y));
-    if (here?.Items is { } items && items.Any(i => i is "plank" or "nail"))
+
+    // Pick up health pack when missing health
+    if (here?.Items is { } hpItems && hpItems.Contains("health") && s.Health < s.MaxHealth)
+        return new AgentAction("pickup", null);
+
+    // Pick up plank, nail, or shield from the current cell
+    if (here?.Items is { } items && items.Any(i => i is "plank" or "nail" or "shield"))
         return new AgentAction("pickup", null);
 
     // Movement preference: East (0), South (3), North (2), West (1)
@@ -211,6 +216,7 @@ static AgentAction ChooseAction(GameState s)
             case "floor":
             case "bridge":
             case "goal":
+            case "teleporter":
                 return new AgentAction("move", dir);
 
             case "low_obstacle":
@@ -327,6 +333,7 @@ record GameState(
     string TeamName,
     int X, int Y,
     int Health, int MaxHealth,
+    int ShieldHealth,
     bool IsCrawling,
     int MushroomsCollected,
     List<string> Backpack,
