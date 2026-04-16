@@ -15,8 +15,8 @@ public static class AdminEndpoints
         {
             if (!ValidateAdmin(ctx, session, config)) return Results.Unauthorized();
 
-            if (req.Level is < 1 or > 10)
-                return Results.BadRequest(new { error = "Level must be between 1 and 10." });
+            if (req.Level is < 1)
+                return Results.BadRequest(new { error = "Level must be greater than 1." });
             if (req.TimeoutSeconds <= 0)
                 return Results.BadRequest(new { error = "TimeoutSeconds must be positive." });
 

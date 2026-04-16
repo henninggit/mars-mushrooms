@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-const API_BASE = '/api/admin';
+const API_BASE = "/api/admin";
 
 const LEVEL_NAMES: Record<number, string> = {
-  1: 'Dust & Boots',
-  2: 'Mind the Gap',
-  3: 'Duck and Dash',
-  4: 'Bridge Builders',
-  5: 'Blind Repair',
-  6: 'Labyrinth of Dust',
-  7: 'Spore Highway',
-  8: 'Hostile Corridors',
-  9: 'Colony Convergence',
-  10: 'Last Spore Standing',
+  1: "Dust & Boots",
+  2: "Mind the Gap",
+  3: "Duck and Dash",
+  4: "Bridge Builders",
+  5: "Blind Repair",
+  6: "Labyrinth of Dust",
+  7: "Spore Highway",
+  8: "Hostile Corridors",
+  9: "Lost Caves of Mars",
+  10: "Colony Convergence",
+  11: "Last Spore Standing",
 };
 
 interface AdminPanelProps {
@@ -20,48 +21,60 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [level, setLevel] = useState(1);
   const [timeout, setTimeout_] = useState(300);
-  const [seed, setSeed] = useState('');
+  const [seed, setSeed] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const headers = () => ({
-    'Content-Type': 'application/json',
-    'X-Admin-Password': password,
+    "Content-Type": "application/json",
+    "X-Admin-Password": password,
   });
 
   async function createRound() {
-    setMessage(null); setError(null);
+    setMessage(null);
+    setError(null);
     const body: Record<string, unknown> = { level, timeoutSeconds: timeout };
     if (seed.trim()) body.seed = parseInt(seed, 10);
     const res = await fetch(`${API_BASE}/rounds/create`, {
-      method: 'POST', headers: headers(), body: JSON.stringify(body),
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (res.ok) setMessage(`Round created: ID ${data.roundId} — Level ${data.level}, Seed ${data.seed}`);
-    else setError(data.error ?? 'Failed to create round');
+    if (res.ok)
+      setMessage(
+        `Round created: ID ${data.roundId} — Level ${data.level}, Seed ${data.seed}`,
+      );
+    else setError(data.error ?? "Failed to create round");
   }
 
   async function startRound() {
-    setMessage(null); setError(null);
+    setMessage(null);
+    setError(null);
     const res = await fetch(`${API_BASE}/rounds/start`, {
-      method: 'POST', headers: headers(),
+      method: "POST",
+      headers: headers(),
     });
     const data = await res.json();
-    if (res.ok) { setMessage(data.message); onRoundStarted?.(); }
-    else setError(data.error ?? 'Failed to start round');
+    if (res.ok) {
+      setMessage(data.message);
+      onRoundStarted?.();
+    } else setError(data.error ?? "Failed to start round");
   }
 
   async function endRound() {
-    setMessage(null); setError(null);
+    setMessage(null);
+    setError(null);
     const res = await fetch(`${API_BASE}/rounds/end`, {
-      method: 'POST', headers: headers(),
+      method: "POST",
+      headers: headers(),
     });
     const data = await res.json();
     if (res.ok) setMessage(data.message);
-    else setError(data.error ?? 'Failed to end round');
+    else setError(data.error ?? "Failed to end round");
   }
 
   return (
@@ -73,7 +86,7 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
         <input
           type="password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           className="mt-1 w-full bg-stone-800 border border-orange-800 rounded px-2 py-1 text-orange-100 text-sm"
           placeholder="Enter admin password"
         />
@@ -81,23 +94,27 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
 
       <div className="flex gap-2">
         <label className="flex-1 block text-sm text-orange-300">
-          Level (1-10)
+          Level (1-11)
           <input
-            type="number" min={1} max={10}
+            type="number"
+            min={1}
             value={level}
-            onChange={e => setLevel(parseInt(e.target.value, 10) || 1)}
+            onChange={(e) => setLevel(parseInt(e.target.value, 10) || 1)}
             className="mt-1 w-full bg-stone-800 border border-orange-800 rounded px-2 py-1 text-orange-100 text-sm"
           />
           {LEVEL_NAMES[level] && (
-            <span className="block mt-0.5 text-xs text-orange-400 italic">{LEVEL_NAMES[level]}</span>
+            <span className="block mt-0.5 text-xs text-orange-400 italic">
+              {LEVEL_NAMES[level]}
+            </span>
           )}
         </label>
         <label className="flex-1 block text-sm text-orange-300">
           Timeout (s)
           <input
-            type="number" min={30}
+            type="number"
+            min={30}
             value={timeout}
-            onChange={e => setTimeout_(parseInt(e.target.value, 10) || 300)}
+            onChange={(e) => setTimeout_(parseInt(e.target.value, 10) || 300)}
             className="mt-1 w-full bg-stone-800 border border-orange-800 rounded px-2 py-1 text-orange-100 text-sm"
           />
         </label>
@@ -108,7 +125,7 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
         <input
           type="text"
           value={seed}
-          onChange={e => setSeed(e.target.value)}
+          onChange={(e) => setSeed(e.target.value)}
           className="mt-1 w-full bg-stone-800 border border-orange-800 rounded px-2 py-1 text-orange-100 text-sm"
           placeholder="Leave blank for random"
         />
