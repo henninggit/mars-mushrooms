@@ -3,7 +3,7 @@ namespace MarsvilleStarter.Model;
 /// <summary>
 /// An enriched view of a single board cell within the player's vision radius.
 /// </summary>
-public sealed class CellView
+public class CellView
 {
     /// <summary>Grid X coordinate (column, 0-based).</summary>
     public int X { get; }
@@ -49,7 +49,7 @@ public sealed class CellView
 
     // ---------------------------------------------------------------- construction
 
-    internal CellView(CellDto dto, bool isPartlyVisible)
+    public CellView(CellDto dto, bool isPartlyVisible)
     {
         X               = dto.X;
         Y               = dto.Y;
