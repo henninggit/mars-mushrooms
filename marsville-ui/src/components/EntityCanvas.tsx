@@ -132,6 +132,7 @@ export default function EntityCanvas({ board }: EntityCanvasProps) {
           state.flashAlpha = 0;
         }
 
+        ctx.fillStyle = 'white'; // reset before drawing icon — prevents stale near-transparent fill from a decaying flash making entities invisible
         ctx.fillText(state.icon, cx, cy);
       }
 
