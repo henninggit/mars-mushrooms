@@ -22,7 +22,6 @@ public class GameRound
     public DateTimeOffset? EndedAt { get; private set; }
     public int TimeoutSeconds { get; }
 
-    // Per-player boards (levels 1-9) or single shared board (levels 10-11)
     public bool IsSharedBoard => LevelFactory.IsSharedLevel(Level);
     private readonly Dictionary<string, Board> _playerBoards = new(); // playerId -> board
     private Board? _sharedBoard;

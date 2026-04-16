@@ -363,7 +363,7 @@ public static class LevelFactory
     // ------------------------------------------------------------------ Helper: carve rooms
 
     /// <summary>
-    /// Widens <paramref name="roomCount"/> randomly chosen carved cells into 3×3 open
+    /// Widens <paramref name="roomCount"/> randomly chosen carved cells into random×random (max 5x5) open
     /// rooms by replacing surrounding wall cells with floor cells.
     /// </summary>
     private static void CarveRooms(CellBase[,] grid, int w, int h, int roomCount, Random rng)
@@ -376,13 +376,21 @@ public static class LevelFactory
 
         for (int r = 0; r < roomCount && floorCells.Count > 0; r++)
         {
+            var roomWidth = rng.Next(2, 5);
+            var roomHeight = rng.Next(2, 5);
             var (cx, cy) = floorCells[rng.Next(floorCells.Count)];
-            for (int dy = -1; dy <= 1; dy++)
-                for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= roomHeight; dy++)
+                for (int dx = -1; dx <= roomWidth; dx++)
                 {
                     int nx = cx + dx, ny = cy + dy;
                     if (nx >= 1 && nx <= w - 2 && ny >= 1 && ny <= h - 2)
-                        grid[ny, nx] = new FloorCell(nx, ny);
+                    {
+                        // small chance to leave in a column
+                        if (rng.Next(1, 8) > 1)
+                        {
+                            grid[ny, nx] = new FloorCell(nx, ny);
+                        }
+                    }
                 }
         }
     }
