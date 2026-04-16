@@ -13,21 +13,27 @@ namespace Marsville2.Domain;
 /// </summary>
 public static class LevelFactory
 {
-    public static Board CreateBoard(int level, int seed) => level switch
+    public static Board CreateBoard(int level, int seed)
     {
-        1 => CreateLevel1(seed),
-        2 => CreateLevel2(seed),
-        3 => CreateLevel3(seed),
-        4 => CreateLevel4(seed),
-        5 => CreateLevel5(seed),
-        6 => CreateLevel6(seed),
-        7 => CreateLevel7(seed),
-        8 => CreateLevel8(seed),
-        9 => CreateLevel9(seed),
-        10 => CreateLevel10(seed),
-        11 => CreateLevel11(seed),
-        _ => throw new ArgumentOutOfRangeException(nameof(level), $"Level {level} is not defined.")
-    };
+        var board = level switch
+        {
+            1  => CreateLevel1(seed),
+            2  => CreateLevel2(seed),
+            3  => CreateLevel3(seed),
+            4  => CreateLevel4(seed),
+            5  => CreateLevel5(seed),
+            6  => CreateLevel6(seed),
+            7  => CreateLevel7(seed),
+            8  => CreateLevel8(seed),
+            9  => CreateLevel9(seed),
+            10 => CreateLevel10(seed),
+            11 => CreateLevel11(seed),
+            _  => throw new ArgumentOutOfRangeException(nameof(level), $"Level {level} is not defined.")
+        };
+
+        EnsureBridgeMaterials(board, new Random(seed ^ (level * 1031)));
+        return board;
+    }
 
     /// <summary>Returns the thematic name for a given level number.</summary>
     public static string GetLevelName(int level) => level switch
@@ -126,22 +132,17 @@ public static class LevelFactory
     }
 
     // ------------------------------------------------------------------ Level 4
-    // Bridge gap (3 BrokenBridge) + planks/nails on floor + 1 mushroom
+    // Bridge gap (3 BrokenBridge) + 1 mushroom
     private static Board CreateLevel4(int seed)
     {
         const int width = 18;
         int bridgeStart = SeededOffset(seed, 4, 5, 9);
         int mushroomX = SeededOffset(seed, 41, 2, 4);
-        // Planks and nails are placed before the bridge gap
-        int plankX = SeededOffset(seed, 42, 1, bridgeStart - 2);
-        int nailX = plankX == 1 ? 2 : 1;
 
         var cells = BuildCorridor(width, c =>
         {
             for (int i = 0; i < 3; i++)
                 c[bridgeStart + i] = new BrokenBridgeCell(bridgeStart + i, 0);
-            c[plankX].Items.Add(new Plank());
-            c[nailX].Items.Add(new Nail());
             c[mushroomX].Items.Add(new Mushroom());
         });
         return new Board(width, 1, 4, cells);
@@ -154,15 +155,11 @@ public static class LevelFactory
         const int width = 20;
         int bridgeStart = SeededOffset(seed, 5, 6, 11);
         int mushroomX = SeededOffset(seed, 51, 2, 4);
-        int plankX = SeededOffset(seed, 52, 1, bridgeStart - 2);
-        int nailX = plankX == 1 ? 2 : 1;
 
         var cells = BuildCorridor(width, c =>
         {
             for (int i = 0; i < 3; i++)
                 c[bridgeStart + i] = new BrokenBridgeCell(bridgeStart + i, 0);
-            c[plankX].Items.Add(new Plank());
-            c[nailX].Items.Add(new Nail());
             c[mushroomX].Items.Add(new Mushroom());
         });
         return new Board(width, 1, 5, cells, visionRadius: 3);
@@ -211,10 +208,6 @@ public static class LevelFactory
             grid[4, 5] = new BrokenBridgeCell(5, 4);
             grid[4, 6] = new BrokenBridgeCell(6, 4);
             grid[4, 7] = new BrokenBridgeCell(7, 4);
-
-            // Materials placed on the west side of the divider
-            grid[3, 3].Items.Add(new Plank());
-            grid[3, 1].Items.Add(new Nail());
 
             // Low obstacle tunnel on row 7
             grid[7, 7] = new LowObstacleCell(7, 7);
@@ -273,10 +266,6 @@ public static class LevelFactory
             grid[5, 5] = new BrokenBridgeCell(5, 5);
             grid[5, 6] = new BrokenBridgeCell(6, 5); // spans the divider
 
-            // Materials in the pocket
-            grid[4, 10].Items.Add(new Plank());
-            grid[5, 10].Items.Add(new Nail());
-
             // Lower mid section walls
             grid[7, 5] = new WallCell(5, 7); grid[7, 6] = new WallCell(6, 7);
             grid[7, 12] = new WallCell(12, 7);
@@ -327,9 +316,6 @@ public static class LevelFactory
             grid[5, 4] = new BrokenBridgeCell(4, 5);
             grid[5, 5] = new BrokenBridgeCell(5, 5);
             grid[5, 6] = new BrokenBridgeCell(6, 5);
-
-            grid[4, 10].Items.Add(new Plank());
-            grid[5, 10].Items.Add(new Nail());
 
             grid[7, 5] = new WallCell(5, 7); grid[7, 6] = new WallCell(6, 7);
             grid[7, 12] = new WallCell(12, 7);
@@ -400,21 +386,6 @@ public static class LevelFactory
             for (int x = width - 2; x >= divX + 1 && goalX == -1; x--)
                 if (grid[y, x] is FloorCell) { goalX = x; goalY = y; }
         grid[goalY, goalX] = new GoalCell(goalX, goalY);
-
-        // Place plank and nail in two distinct reachable left-half cells (not the start)
-        var leftFloor = new List<(int x, int y)>();
-        for (int y = 1; y < height - 1; y++)
-            for (int x = 1; x < divX; x++)
-                if (grid[y, x] is FloorCell && !(x == 1 && y == 1))
-                    leftFloor.Add((x, y));
-
-        var plankIdx = rng.Next(leftFloor.Count);
-        var (plankX, plankY) = leftFloor[plankIdx];
-        leftFloor.RemoveAt(plankIdx);
-        var (nailX, nailY) = leftFloor[rng.Next(leftFloor.Count)];
-
-        grid[plankY, plankX].Items.Add(new Plank());
-        grid[nailY, nailX].Items.Add(new Nail());
 
         // Flatten grid to array
         var flat = new CellBase[width * height];
@@ -500,12 +471,6 @@ public static class LevelFactory
             grid[6, 6] = new BrokenBridgeCell(6, 6);
             grid[6, 7] = new BrokenBridgeCell(7, 6);
             grid[6, 8] = new BrokenBridgeCell(8, 6);
-
-            // Materials scattered in Zone A
-            grid[4, 2].Items.Add(new Plank());
-            grid[2, 4].Items.Add(new Nail());
-            grid[7, 4].Items.Add(new Plank()); // second set for multiple players
-            grid[8, 2].Items.Add(new Nail());
 
             // Internal walls in Zone A giving it texture
             grid[2, 2] = new WallCell(2, 2); grid[2, 3] = new WallCell(3, 2);
@@ -606,13 +571,178 @@ public static class LevelFactory
             grid[4, 11] = new BrokenBridgeCell(11, 4); grid[4, 12] = new BrokenBridgeCell(12, 4);
             grid[16, 8] = new BrokenBridgeCell(8, 16); grid[16, 9] = new BrokenBridgeCell(9, 16);
 
-            // Materials scattered in all quadrants
-            grid[3, 8].Items.Add(new Plank()); grid[3, 9].Items.Add(new Nail());
-            grid[17, 11].Items.Add(new Plank()); grid[17, 12].Items.Add(new Nail());
-            grid[8, 3].Items.Add(new Plank()); grid[9, 3].Items.Add(new Nail());
-            grid[12, 18].Items.Add(new Plank()); grid[13, 18].Items.Add(new Nail());
         });
 
         return new Board(width, height, 11, flat, visionRadius: 3, isShared: true);
+    }
+
+    // ------------------------------------------------------------------ Bridge-material placement
+
+    /// <summary>
+    /// Ensures every broken-bridge segment that lies on the path from the player start
+    /// to the goal has exactly one <see cref="Plank"/> and one <see cref="Nail"/> placed
+    /// somewhere in the reachable area before it.
+    ///
+    /// The algorithm uses BFS to discover which cells are reachable without crossing any
+    /// broken bridge.  It then iterates: for each broken-bridge cell adjacent to the
+    /// reachable frontier it places one plank and one nail on two distinct floor cells
+    /// already reachable, "unlocks" that bridge (treats it as passable for subsequent BFS
+    /// passes), and repeats until the goal is reachable or there are no more bridges to
+    /// unlock.
+    ///
+    /// This method is a no-op when the board has no goal cell (e.g. level 11 battle
+    /// royale) or when the goal is already reachable without any bridge repairs.
+    /// </summary>
+    public static void EnsureBridgeMaterials(Board board, Random rng)
+    {
+        // No goal means no path to guarantee (battle royale levels).
+        if (!HasGoal(board)) return;
+
+        var unlockedBridges = new HashSet<(int x, int y)>();
+
+        while (true)
+        {
+            var reachable = BfsReachable(board, board.StartX, board.StartY, unlockedBridges);
+
+            // Done if the goal is reachable.
+            if (reachable.Any(pos => board.GetCell(pos.x, pos.y) is GoalCell))
+                return;
+
+            // Find broken-bridge cells that are adjacent to the reachable frontier
+            // and not yet unlocked.
+            var nextBridge = FindFrontierBridge(board, reachable, unlockedBridges);
+            if (nextBridge is null)
+                return; // No bridge found — level design issue; give up gracefully.
+
+            // Place one plank and one nail on two distinct reachable CanPlaceItems cells.
+            PlaceMaterialPair(board, reachable, board.StartX, board.StartY, rng);
+
+            // Unlock this bridge for subsequent BFS passes.
+            unlockedBridges.Add(nextBridge.Value);
+        }
+    }
+
+    /// <summary>
+    /// BFS from (startX, startY) on <paramref name="board"/>.
+    /// Treats <see cref="BrokenBridgeCell"/>s as passable only when they appear in
+    /// <paramref name="unlockedBridges"/>.  Includes jump moves over <see cref="HoleCell"/>s.
+    /// Returns the set of reachable (x, y) positions.
+    /// </summary>
+    private static HashSet<(int x, int y)> BfsReachable(
+        Board board, int startX, int startY,
+        HashSet<(int x, int y)> unlockedBridges)
+    {
+        var visited = new HashSet<(int x, int y)>();
+        var queue = new Queue<(int x, int y)>();
+
+        visited.Add((startX, startY));
+        queue.Enqueue((startX, startY));
+
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, -1, 1 };
+
+        while (queue.Count > 0)
+        {
+            var (cx, cy) = queue.Dequeue();
+
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = cx + dx[d];
+                int ny = cy + dy[d];
+                if (!board.InBounds(nx, ny)) continue;
+
+                var neighbour = board.GetCell(nx, ny);
+
+                // Normal walk
+                if ((neighbour.IsWalkable ||
+                     (neighbour is BrokenBridgeCell && unlockedBridges.Contains((nx, ny))))
+                    && visited.Add((nx, ny)))
+                {
+                    queue.Enqueue((nx, ny));
+                }
+
+                // Jump over a hole: mid cell must be a HoleCell, landing cell walkable
+                if (neighbour is HoleCell)
+                {
+                    int lx = cx + dx[d] * 2;
+                    int ly = cy + dy[d] * 2;
+                    if (board.InBounds(lx, ly))
+                    {
+                        var landing = board.GetCell(lx, ly);
+                        if (landing.IsWalkable && visited.Add((lx, ly)))
+                            queue.Enqueue((lx, ly));
+                    }
+                }
+            }
+        }
+
+        return visited;
+    }
+
+    /// <summary>
+    /// Finds the first <see cref="BrokenBridgeCell"/> that is directly adjacent (cardinal)
+    /// to at least one reachable cell and has not yet been unlocked.
+    /// </summary>
+    private static (int x, int y)? FindFrontierBridge(
+        Board board,
+        HashSet<(int x, int y)> reachable,
+        HashSet<(int x, int y)> unlockedBridges)
+    {
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, -1, 1 };
+
+        foreach (var (rx, ry) in reachable)
+        {
+            for (int d = 0; d < 4; d++)
+            {
+                int bx = rx + dx[d];
+                int by = ry + dy[d];
+                if (!board.InBounds(bx, by)) continue;
+                if (board.GetCell(bx, by) is BrokenBridgeCell
+                    && !unlockedBridges.Contains((bx, by)))
+                    return (bx, by);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Places one <see cref="Plank"/> and one <see cref="Nail"/> on two distinct
+    /// reachable cells that accept items (<see cref="CellBase.CanPlaceItems"/>),
+    /// excluding the player start cell.
+    /// </summary>
+    private static void PlaceMaterialPair(
+        Board board,
+        HashSet<(int x, int y)> reachable,
+        int startX, int startY,
+        Random rng)
+    {
+        var candidates = reachable
+            .Where(pos => !(pos.x == startX && pos.y == startY)
+                          && board.GetCell(pos.x, pos.y).CanPlaceItems)
+            .ToList();
+
+        if (candidates.Count == 0) return;
+
+        int pi = rng.Next(candidates.Count);
+        var (px, py) = candidates[pi];
+        board.GetCell(px, py).Items.Add(new Plank());
+
+        // Remove the chosen cell so the nail goes somewhere different.
+        candidates.RemoveAt(pi);
+        if (candidates.Count == 0) return;
+
+        var (nx, ny) = candidates[rng.Next(candidates.Count)];
+        board.GetCell(nx, ny).Items.Add(new Nail());
+    }
+
+    private static bool HasGoal(Board board)
+    {
+        for (int y = 0; y < board.Height; y++)
+            for (int x = 0; x < board.Width; x++)
+                if (board.GetCell(x, y) is GoalCell)
+                    return true;
+        return false;
     }
 }
