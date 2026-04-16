@@ -1,7 +1,7 @@
 A list of tasks.
 
 - [x] Fix bug where player can spawn in walls
-- [ ] Fix bug where some levels are generated with broken bridges, but not enough "hammers and nails" to fix them
+- [x] Fix bug where some levels are generated with broken bridges, but not enough "hammers and nails" to fix them
 - [x] Setup proper scaffolding for the agent which makes it easy for the participants to implement their own agents
 - [ ] In the last level, add a "warning square" before a cell becomes wall
 - [x] Add a "dark" maze level (low sight radius requiring memorya and exploration)
@@ -16,3 +16,12 @@ A list of tasks.
 - [ ] Players can move after reaching goal
 - [ ] Round does not end on everyone reaching goal
 - [ ] Leaderboard
+- [ ] Bug: Character becomes invisible upon taking damage (or dealing damage?)
+- [x] Bug: Goal can be inaccessible => we need to re-factor the level gen. It should have these steps:
+- Generate map of size x \* y (walls)
+- Place spawn somwehere along the outer perimterer
+- Place reachable goal in random location (weighted towards opposite side of spawn)
+- Place reachable bridges
+- Place reachable bridge build items
+- Place reachable mushrooms
+-
