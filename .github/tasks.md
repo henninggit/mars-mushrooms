@@ -5,18 +5,23 @@ A list of tasks.
 - [x] Setup proper scaffolding for the agent which makes it easy for the participants to implement their own agents
 - [ ] In the last level, add a "warning square" before a cell becomes wall
 - [x] Add a "dark" maze level (low sight radius requiring memorya and exploration)
-- [ ] Add a level with a "teleporter" cell that teleports the player to another location on the map
-- [ ] Ensure maze-like constructs and "columns" can be generated in levels
+- [x] Add a level with a "teleporter" cell that teleports the player to another location on the map
+- [x] Ensure maze-like constructs and "columns" can be generated in levels
 - [ ] Sikre at hosting funker med Per Frode
 - [ ] Sikre spesielt at slåss mot hverandre funker
 - [x] Add basic movement animations so it is easier to track what happens
 - [x] Ensure interaction animations look good
-- [ ] Add a "shield" that negates one attack
+- [x] Add a "shield" that negates one attack
 - [x] Add level names which get displayed in the UI which sets the tone for the level
-- [ ] Players can move after reaching goal
-- [ ] Round does not end on everyone reaching goal
+- [x] Players can move after reaching goal
+- [x] Round does not end on everyone reaching goal
 - [ ] Leaderboard
-- [ ] Bug: Character becomes invisible upon taking damage (or dealing damage?)
+      -- Includes better scoring. Rules:
+      -- Complete level: +100 points
+      -- Each turn: -1 point
+      -- Mushroom: Each mushroom gathered: +10 points
+      -- Should show when every agent is done with a level (i.e. when not actively running a level) in the UI
+- [x] Bug: Character becomes invisible upon taking damage (or dealing damage?)
 - [x] Bug: Goal can be inaccessible => we need to re-factor the level gen. It should have these steps:
 - Generate map of size x \* y (walls)
 - Place spawn somwehere along the outer perimterer
@@ -24,4 +29,7 @@ A list of tasks.
 - Place reachable bridges
 - Place reachable bridge build items
 - Place reachable mushrooms
--
+- [ ] gravestone death visual - maybe with like a "dark souls"/"gta" death overlay
+- [ ] fix battle royale level scoring
+- [ ] Shields does not work right. It should negate one attack, not increase health max. After negating an attack it should be lost. Also health should not auto-regen.
+- [ ] Add a "poison mushroom" that kills you when picked up.
