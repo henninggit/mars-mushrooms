@@ -29,6 +29,9 @@ export default function BoardGrid({ board }: BoardGridProps) {
           ❤️ {Array.from({ length: board.maxHealth }, (_, i) => (
             <span key={i}>{i < board.health ? '♥' : '♡'}</span>
           ))}
+          {board.shieldHealth > 0 && (
+            <span className="text-blue-300 ml-1">🛡️×{board.shieldHealth}</span>
+          )}
         </span>
         {board.isCrawling && <span className="text-yellow-300 text-xs">🐛 crawling</span>}
         <span className="text-gray-400 text-xs">

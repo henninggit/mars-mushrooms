@@ -68,11 +68,12 @@ public class BoardService
 
             player.X = nx;
             player.Y = ny;
+            ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (cell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
+            if (_board.GetCell(player.X, player.Y) is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -104,11 +105,12 @@ public class BoardService
 
             player.X = landX;
             player.Y = landY;
+            ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (landCell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
+            if (_board.GetCell(player.X, player.Y) is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -134,11 +136,12 @@ public class BoardService
             player.X = nx;
             player.Y = ny;
             player.SetCrawling(cell is LowObstacleCell);
+            ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (cell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
+            if (_board.GetCell(player.X, player.Y) is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -154,9 +157,33 @@ public class BoardService
             var cell = _board.GetCell(player.X, player.Y);
             var item = cell.Items.FirstOrDefault(i => i is not Mushroom); // mushrooms auto-collect on move
             if (item is null) return ActionResult.NoItemToPickUp;
-            if (player.Backpack.IsFull) return ActionResult.BackpackFull;
 
             cell.Items.Remove(item);
+
+            // Immediately-consumed items — do not go into backpack
+            if (item is HealthPack)
+            {
+                player.HealToFull();
+                player.RecordAction();
+                _enemyAi.MoveEnemies(player);
+                return ActionResult.Ok;
+            }
+
+            if (item is Shield)
+            {
+                player.AddShield();
+                player.RecordAction();
+                _enemyAi.MoveEnemies(player);
+                return ActionResult.Ok;
+            }
+
+            if (player.Backpack.IsFull)
+            {
+                // Put the item back and report backpack full
+                cell.Items.Add(item);
+                return ActionResult.BackpackFull;
+            }
+
             player.Backpack.TryAdd(item);
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
@@ -221,6 +248,21 @@ public class BoardService
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
             return ActionResult.Ok;
+        }
+    }
+
+    // ------------------------------------------------------------------ Teleporter helper
+
+    /// <summary>
+    /// If the player's current cell is a <see cref="TeleporterCell"/>, warps them to
+    /// the target position. One-shot: landing on a teleporter via warp does not chain.
+    /// </summary>
+    private void ApplyTeleporter(Player player)
+    {
+        if (_board.GetCell(player.X, player.Y) is TeleporterCell teleporter)
+        {
+            player.X = teleporter.TargetX;
+            player.Y = teleporter.TargetY;
         }
     }
 }

@@ -14,6 +14,7 @@ const CELL_ICONS: Record<string, string> = {
   low_obstacle: '🪨',
   wall: '',
   goal: '🚀',
+  teleporter: '🌀',
 };
 
 const CELL_BG: Record<string, string> = {
@@ -24,12 +25,15 @@ const CELL_BG: Record<string, string> = {
   low_obstacle: 'bg-stone-500',
   wall: 'bg-gray-700',
   goal: 'bg-green-400',
+  teleporter: 'bg-purple-500',
 };
 
 const ITEM_ICONS: Record<string, string> = {
   mushroom: '🍄',
   plank: '🪵',
   nail: '📌',
+  health: '❤️‍🩹',
+  shield: '🛡️',
 };
 
 export default function Cell({ cell, isPlayerPos, hideEntity }: CellProps) {

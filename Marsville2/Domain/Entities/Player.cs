@@ -7,7 +7,7 @@ namespace Marsville2.Domain.Entities;
 /// </summary>
 public class Player : EntityBase
 {
-    public override int MaxHealth => _maxHealth;
+    public override int MaxHealth => _maxHealth + ShieldHealth;
     public override string EntityType => "player";
 
     public string TeamName { get; }
@@ -25,6 +25,9 @@ public class Player : EntityBase
     private bool _isCrawling;
     public bool IsCrawling => _isCrawling;
 
+    /// <summary>Additive bonus max health from collected shields.</summary>
+    public int ShieldHealth { get; private set; }
+
     public Player(string id, string teamName, string token, int x, int y, int maxHealth = 2)
         : base(id, x, y, maxHealth)
     {
@@ -32,6 +35,18 @@ public class Player : EntityBase
         Token = token;
         _maxHealth = maxHealth;
     }
+
+    /// <summary>
+    /// Increases maximum health by 1 (shield bonus) and immediately heals 1 HP.
+    /// </summary>
+    public void AddShield()
+    {
+        ShieldHealth++;
+        Health = Math.Min(MaxHealth, Health + 1);
+    }
+
+    /// <summary>Restores health to the current maximum (used by health packs).</summary>
+    public void HealToFull() => Health = MaxHealth;
 
     public void CollectMushroom()
     {

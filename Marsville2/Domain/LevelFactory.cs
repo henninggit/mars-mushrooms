@@ -29,6 +29,7 @@ public static class LevelFactory
             9  => CreateLevel9(seed),
             10 => CreateLevel10(seed),
             11 => CreateLevel11(seed),
+            12 => CreateLevel12(seed),
             int highLevel  => CreateHighlevel(highLevel, seed)
         };
 
@@ -48,13 +49,14 @@ public static class LevelFactory
         7  => "Spore Highway",
         8  => "Hostile Corridors",
         9  => "Lost Caves of Mars",
-        10 => "Colony Convergence",
-        11 => "Last Spore Standing",
+        10 => "Warp Nexus",
+        11 => "Colony Convergence",
+        12 => "Last Spore Standing",
         _  => $"Level {level}"
     };
 
     /// <summary>Returns true for levels that use a single shared board for all players.</summary>
-    public static bool IsSharedLevel(int level) => level is 10 or 11;
+    public static bool IsSharedLevel(int level) => level is 11 or 12;
 
     // ------------------------------------------------------------------ Level config
 
@@ -69,7 +71,10 @@ public static class LevelFactory
         int LowObstacleCount = 0,
         int MushroomCount = 0,
         int EnemyCount = 0,
-        int RoomCount = 0
+        int RoomCount = 0,
+        int HealthPackCount = 0,
+        int ShieldCount = 0,
+        int TeleporterCount = 0
     );
 
     // ------------------------------------------------------------------ Level definitions
@@ -95,23 +100,35 @@ public static class LevelFactory
 
     private static Board CreateLevel6(int seed) =>
         BuildGridLevel(new LevelConfig(12, 10, 6, VisionRadius: 3,
-            BrokenBridgeCount: 3, LowObstacleCount: 3, RoomCount: 2), seed);
+            BrokenBridgeCount: 3, LowObstacleCount: 3, RoomCount: 2,
+            HealthPackCount: 1, ShieldCount: 1), seed);
 
     private static Board CreateLevel7(int seed) =>
         BuildGridLevel(new LevelConfig(14, 12, 7, VisionRadius: 3,
-            BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, RoomCount: 3), seed);
+            BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, RoomCount: 3,
+            HealthPackCount: 1, ShieldCount: 1), seed);
 
     private static Board CreateLevel8(int seed) =>
         BuildGridLevel(new LevelConfig(14, 12, 8, VisionRadius: 3,
-            BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, EnemyCount: 3, RoomCount: 3), seed);
+            BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, EnemyCount: 3, RoomCount: 3,
+            HealthPackCount: 1, ShieldCount: 1), seed);
 
     private static Board CreateLevel9(int seed) =>
         BuildGridLevel(new LevelConfig(21, 19, 9, VisionRadius: 1,
-            BrokenBridgeCount: 1, RoomCount: 1), seed);
+            BrokenBridgeCount: 1, RoomCount: 1,
+            HealthPackCount: 1, ShieldCount: 1), seed);
 
+    /// <summary>Level 10 — Warp Nexus: a teleporter maze with 4 linked teleporter pads.</summary>
     private static Board CreateLevel10(int seed) =>
-        BuildGridLevel(new LevelConfig(18, 16, 10, VisionRadius: 3, IsShared: true,
-            BrokenBridgeCount: 3, LowObstacleCount: 3, MushroomCount: 6, EnemyCount: 4, RoomCount: 3), seed);
+        BuildGridLevel(new LevelConfig(16, 14, 10, VisionRadius: 3,
+            BrokenBridgeCount: 2, LowObstacleCount: 2, MushroomCount: 3, RoomCount: 2,
+            HealthPackCount: 1, ShieldCount: 1, TeleporterCount: 4), seed);
+
+    /// <summary>Level 11 — Colony Convergence: shared board, all players compete.</summary>
+    private static Board CreateLevel11(int seed) =>
+        BuildGridLevel(new LevelConfig(18, 16, 11, VisionRadius: 3, IsShared: true,
+            BrokenBridgeCount: 3, LowObstacleCount: 3, MushroomCount: 6, EnemyCount: 4, RoomCount: 3,
+            HealthPackCount: 1, ShieldCount: 1), seed);
 
     public static Board CreateHighlevel(int level, int seed)
     {
@@ -124,14 +141,21 @@ public static class LevelFactory
         var mushroomCount = random.Next(size / 8, size / 2);
         var enemyCount = random.Next(size / 16, size / 8);
         var roomCount = random.Next(0, size / 2);
+        var healthPackCount = random.Next(0, 4);
+        var shieldCount = random.Next(0, 5);
+        // 50% seeded chance of teleporters based on seed+level
+        var hasTeleporters = SeededOffset(seed, level, 0, 1) == 1;
+        var teleporterCount = hasTeleporters ? Math.Max(2, (size / 4) / 2 * 2) : 0; // nearest even ≥ 2
         return BuildGridLevel(new LevelConfig(size, size, level, visionRadius, isShared, false,
-            brokenBridgeCount, lowObstacleCount, mushroomCount, enemyCount, roomCount), seed);
+            brokenBridgeCount, lowObstacleCount, mushroomCount, enemyCount, roomCount,
+            healthPackCount, shieldCount, teleporterCount), seed);
     }
 
-    // ------------------------------------------------------------------ Level 11 (battle royale — kept hardcoded)
+    // ------------------------------------------------------------------ Level 12 (battle royale — kept hardcoded)
 
     // Battle royale: no goal, shared board. Mushrooms are placed by GameService.
-    private static Board CreateLevel11(int seed)
+    // Five shields are placed near the centre of the board.
+    private static Board CreateLevel12(int seed)
     {
         const int w = 22, h = 22;
         var flat = new CellBase[w * h];
@@ -177,7 +201,15 @@ public static class LevelFactory
         Set(11, 4, new BrokenBridgeCell(11, 4)); Set(12, 4, new BrokenBridgeCell(12, 4));
         Set(8, 16, new BrokenBridgeCell(8, 16)); Set(9, 16, new BrokenBridgeCell(9, 16));
 
-        return new Board(w, h, 11, flat, visionRadius: 3, isShared: true);
+        // Five shields near the board centre (cross pattern around (11,11))
+        void AddShield(int x, int y) => flat[y * w + x].Items.Add(new Shield());
+        AddShield(11, 9);
+        AddShield(9, 11);
+        AddShield(11, 11);
+        AddShield(13, 11);
+        AddShield(11, 13);
+
+        return new Board(w, h, 12, flat, visionRadius: 3, isShared: true);
     }
 
     // ------------------------------------------------------------------ Pipeline: corridor levels
@@ -330,6 +362,27 @@ public static class LevelFactory
         {
             var (reachable, _) = BfsReachable(board, spawnX, spawnY, AllBridgePositions(board));
             PlaceEnemies(board, reachable, spawnX, spawnY, cfg.EnemyCount, rng);
+        }
+
+        // Step 11: place teleporters in linked pairs
+        if (cfg.TeleporterCount > 0)
+        {
+            var (reachable, _) = BfsReachable(board, spawnX, spawnY, AllBridgePositions(board));
+            PlaceTeleporters(board, reachable, spawnX, spawnY, cfg.TeleporterCount, rng);
+        }
+
+        // Step 12: place health packs
+        if (cfg.HealthPackCount > 0)
+        {
+            var (reachable, _) = BfsReachable(board, spawnX, spawnY, AllBridgePositions(board));
+            PlaceHealthPacks(board, reachable, spawnX, spawnY, cfg.HealthPackCount, rng);
+        }
+
+        // Step 13: place shields
+        if (cfg.ShieldCount > 0)
+        {
+            var (reachable, _) = BfsReachable(board, spawnX, spawnY, AllBridgePositions(board));
+            PlaceShields(board, reachable, spawnX, spawnY, cfg.ShieldCount, rng);
         }
 
         return board;
@@ -521,6 +574,97 @@ public static class LevelFactory
             board.AddEnemy(new Enemy(Guid.NewGuid().ToString(), x, y));
             pool.RemoveAt(idx);
             pool.RemoveAll(p => ManhattanDistance(p.x, p.y, x, y) < 3);
+        }
+    }
+
+    // ------------------------------------------------------------------ Helper: place health packs
+
+    /// <summary>
+    /// Adds <see cref="HealthPack"/> items to <paramref name="count"/> reachable cells,
+    /// skipping spawn. Health packs are spread to avoid clustering.
+    /// </summary>
+    private static void PlaceHealthPacks(Board board, HashSet<(int x, int y)> reachable,
+        int spawnX, int spawnY, int count, Random rng)
+    {
+        var pool = reachable
+            .Where(p => board.GetCell(p.x, p.y) is FloorCell or TeleporterCell
+                        && !(p.x == spawnX && p.y == spawnY))
+            .ToList();
+
+        for (int i = 0; i < count && pool.Count > 0; i++)
+        {
+            int idx = rng.Next(pool.Count);
+            var (x, y) = pool[idx];
+            board.GetCell(x, y).Items.Add(new HealthPack());
+            pool.RemoveAt(idx);
+            pool.RemoveAll(p => ManhattanDistance(p.x, p.y, x, y) < 3);
+        }
+    }
+
+    // ------------------------------------------------------------------ Helper: place shields
+
+    /// <summary>
+    /// Adds <see cref="Shield"/> items to <paramref name="count"/> reachable cells,
+    /// preferring positions in the far half of the level to reward exploration.
+    /// </summary>
+    private static void PlaceShields(Board board, HashSet<(int x, int y)> reachable,
+        int spawnX, int spawnY, int count, Random rng)
+    {
+        var pool = reachable
+            .Where(p => board.GetCell(p.x, p.y) is FloorCell or TeleporterCell
+                        && !(p.x == spawnX && p.y == spawnY))
+            .OrderByDescending(p => ManhattanDistance(p.x, p.y, spawnX, spawnY))
+            .Take(reachable.Count / 2 + 1)
+            .ToList();
+
+        for (int i = 0; i < count && pool.Count > 0; i++)
+        {
+            int idx = rng.Next(pool.Count);
+            var (x, y) = pool[idx];
+            board.GetCell(x, y).Items.Add(new Shield());
+            pool.RemoveAt(idx);
+            pool.RemoveAll(p => ManhattanDistance(p.x, p.y, x, y) < 3);
+        }
+    }
+
+    // ------------------------------------------------------------------ Helper: place teleporters
+
+    /// <summary>
+    /// Places <paramref name="count"/> teleporter pads (must be even) on reachable floor
+    /// cells. Pads are created in pairs: pad A warps to pad B, and pad B warps to pad A.
+    /// Pairs are spread at least 5 cells apart.
+    /// </summary>
+    private static void PlaceTeleporters(Board board, HashSet<(int x, int y)> reachable,
+        int spawnX, int spawnY, int count, Random rng)
+    {
+        // Ensure count is even
+        count = count / 2 * 2;
+        if (count < 2) return;
+
+        var pool = reachable
+            .Where(p => board.GetCell(p.x, p.y) is FloorCell
+                        && !(p.x == spawnX && p.y == spawnY))
+            .ToList();
+
+        var placed = new List<(int x, int y)>();
+
+        while (placed.Count < count && pool.Count > 0)
+        {
+            int idx = rng.Next(pool.Count);
+            var pos = pool[idx];
+            placed.Add(pos);
+            pool.RemoveAt(idx);
+            // Keep some distance between pads, but not too much (they need to be reachable)
+            pool.RemoveAll(p => ManhattanDistance(p.x, p.y, pos.x, pos.y) < 5);
+        }
+
+        // Pair up in order: (0→1), (2→3), ...
+        for (int i = 0; i + 1 < placed.Count; i += 2)
+        {
+            var (ax, ay) = placed[i];
+            var (bx, by) = placed[i + 1];
+            board.SetCell(ax, ay, new TeleporterCell(ax, ay, bx, by));
+            board.SetCell(bx, by, new TeleporterCell(bx, by, ax, ay));
         }
     }
 

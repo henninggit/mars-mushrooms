@@ -12,8 +12,9 @@ const LEVEL_NAMES: Record<number, string> = {
   7: "Spore Highway",
   8: "Hostile Corridors",
   9: "Lost Caves of Mars",
-  10: "Colony Convergence",
-  11: "Last Spore Standing",
+  10: "Warp Nexus",
+  11: "Colony Convergence",
+  12: "Last Spore Standing",
 };
 
 interface AdminPanelProps {
@@ -94,7 +95,7 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
 
       <div className="flex gap-2">
         <label className="flex-1 block text-sm text-orange-300">
-          Level (1-11)
+          Level (1-12)
           <input
             type="number"
             min={1}

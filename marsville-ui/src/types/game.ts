@@ -3,7 +3,7 @@
 export interface CellDto {
   x: number;
   y: number;
-  cellType: 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal';
+  cellType: 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal' | 'teleporter';
   items: string[];
   entity?: { entityType: 'player' | 'enemy'; id: string; health: number } | null;
 }
@@ -15,6 +15,7 @@ export interface BoardStateDto {
   y: number;
   health: number;
   maxHealth: number;
+  shieldHealth: number;
   isCrawling: boolean;
   mushroomsCollected: number;
   backpack: string[];
