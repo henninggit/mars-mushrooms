@@ -75,7 +75,7 @@ public class GameRound
         var board = GetBoardForPlayer(playerId);
         if (board is null) return true; // never joined
         var player = board.Players.FirstOrDefault(p => p.Id == playerId);
-        return player is null || !player.IsAlive;
+        return player is null || !player.IsAlive || player.HasReachedGoal;
     }
 
     public bool AllPlayersFinished()

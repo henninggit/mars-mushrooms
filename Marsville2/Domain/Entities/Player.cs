@@ -16,6 +16,9 @@ public class Player : EntityBase
     public int MushroomsCollected { get; private set; }
     public int TotalScore { get; set; }
 
+    /// <summary>True once the player has stepped onto the goal cell for this round.</summary>
+    public bool HasReachedGoal { get; private set; }
+
     // Health regeneration: regain 1 HP every 5 actions taken
     private int _actionCount;
     private readonly int _maxHealth;
@@ -37,6 +40,9 @@ public class Player : EntityBase
     }
 
     public void SetCrawling(bool crawling) => _isCrawling = crawling;
+
+    /// <summary>Marks the player as having reached the goal, preventing further actions.</summary>
+    public void MarkGoalReached() => HasReachedGoal = true;
 
     /// <summary>
     /// Called after every action the player performs.

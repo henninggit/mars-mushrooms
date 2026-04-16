@@ -117,7 +117,16 @@ static async Task RunAgent(string teamName, string server)
 
             if (result.Contains("GoalReached"))
             {
-                Console.WriteLine($"[{teamName}] GOAL REACHED! Level={current.Level} Mushrooms={current.MushroomsCollected}. Returning to lobby.");
+                Console.WriteLine($"[{teamName}] GOAL REACHED! Level={current.Level} Mushrooms={current.MushroomsCollected}. Waiting for round to end...");
+                // Poll until the round ends before returning to lobby
+                while (true)
+                {
+                    await Task.Delay(1000);
+                    var (endState, endUnauth) = await FetchState(http, teamName);
+                    if (endUnauth) { await Register(http, teamName); break; }
+                    if (endState is null || endState.Level.ToString() != lastRoundLevel) break;
+                }
+                Console.WriteLine($"[{teamName}] Round ended. Returning to lobby.");
                 break;
             }
 

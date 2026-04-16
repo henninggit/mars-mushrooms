@@ -45,6 +45,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var (dx, dy) = Board.DirectionOffset(direction);
             int nx = player.X + dx;
@@ -71,7 +72,7 @@ public class BoardService
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (cell is GoalCell) return ActionResult.GoalReached;
+            if (cell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -83,6 +84,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var (dx, dy) = Board.DirectionOffset(direction);
             int midX = player.X + dx;
@@ -106,7 +108,7 @@ public class BoardService
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (landCell is GoalCell) return ActionResult.GoalReached;
+            if (landCell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -118,6 +120,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var (dx, dy) = Board.DirectionOffset(direction);
             int nx = player.X + dx;
@@ -135,7 +138,7 @@ public class BoardService
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
-            if (cell is GoalCell) return ActionResult.GoalReached;
+            if (cell is GoalCell) { player.MarkGoalReached(); return ActionResult.GoalReached; }
             return ActionResult.Ok;
         }
     }
@@ -146,6 +149,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var cell = _board.GetCell(player.X, player.Y);
             var item = cell.Items.FirstOrDefault(i => i is not Mushroom); // mushrooms auto-collect on move
@@ -166,6 +170,8 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
+
             if (!player.Backpack.HasPlankAndNail()) return ActionResult.MissingBridgeMaterials;
 
             var (dx, dy) = Board.DirectionOffset(direction);
@@ -190,6 +196,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var killed = _board.DamageAdjacentEnemies(player.X, player.Y, direction).ToList();
             player.RecordAction();
@@ -210,6 +217,7 @@ public class BoardService
         lock (_lock)
         {
             if (!player.IsAlive) return ActionResult.PlayerDead;
+            if (player.HasReachedGoal) return ActionResult.GoalReached;
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
             return ActionResult.Ok;
