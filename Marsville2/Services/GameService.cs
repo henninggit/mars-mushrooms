@@ -170,11 +170,18 @@ public class GameService
             _ => ActionResult.InvalidDirection
         };
 
-        // Award completion point on goal reached (levels 3+)
-        if (result == ActionResult.GoalReached && round.Level >= 3)
+        // Award level completion bonus on goal reached
+        if (result == ActionResult.GoalReached)
         {
             round.RoundScores[sessionPlayer.Id] =
-                round.RoundScores.GetValueOrDefault(sessionPlayer.Id) + 1;
+                round.RoundScores.GetValueOrDefault(sessionPlayer.Id) + 100;
+        }
+
+        // Award kill bonus in battle royale
+        if (result == ActionResult.KilledEnemy && round.Level == 12)
+        {
+            round.RoundScores[sessionPlayer.Id] =
+                round.RoundScores.GetValueOrDefault(sessionPlayer.Id) + 20;
         }
 
         // Check level 12 kill / survivor scoring
@@ -182,7 +189,8 @@ public class GameService
             HandleLevel12Death(round, sessionPlayer.Id);
 
         // Broadcast updated state
-        var stateDto = BuildStateDto(board, boardPlayer);
+        var stateDto = BuildStateDto(board, boardPlayer,
+            round.RoundScores.GetValueOrDefault(sessionPlayer.Id));
         _ = _hub.Clients.All.SendAsync("BoardUpdated", sessionPlayer.Id, stateDto);
         _ = BroadcastAllBoards();
 
@@ -204,7 +212,8 @@ public class GameService
         var boardPlayer = board.Players.FirstOrDefault(p => p.Id == sessionPlayer.Id);
         if (boardPlayer is null) return null;
 
-        return BuildStateDto(board, boardPlayer);
+        return BuildStateDto(board, boardPlayer,
+            round.RoundScores.GetValueOrDefault(sessionPlayer.Id));
     }
 
     // ------------------------------------------------------------------ Level 10 logic
@@ -233,17 +242,18 @@ public class GameService
         int aliveCount = round.SharedBoard?.Players.Count(p => p.IsAlive) ?? 0;
         var scores = round.RoundScores;
 
-        // Scoring for remaining survivors when someone dies
-        if (aliveCount == 0) scores[deadPlayerId] = scores.GetValueOrDefault(deadPlayerId); // last one
         if (aliveCount == 1)
         {
+            // The dying player finished 2nd place
+            scores[deadPlayerId] = scores.GetValueOrDefault(deadPlayerId) + 50;
+            // The last survivor gets the top prize
             var lastAlive = round.SharedBoard!.Players.First(p => p.IsAlive);
-            scores[lastAlive.Id] = scores.GetValueOrDefault(lastAlive.Id) + 4; // last survivor
+            scores[lastAlive.Id] = scores.GetValueOrDefault(lastAlive.Id) + 100;
         }
         else if (aliveCount == 2)
         {
-            // The one that just died is 3rd-to-last
-            scores[deadPlayerId] = scores.GetValueOrDefault(deadPlayerId) + 1;
+            // The dying player finished 3rd place
+            scores[deadPlayerId] = scores.GetValueOrDefault(deadPlayerId) + 25;
         }
 
         // Shrink the border when a player dies
@@ -275,14 +285,17 @@ public class GameService
         if (round.IsSharedBoard && round.SharedBoard is not null)
         {
             foreach (var player in round.SharedBoard.Players)
-                all.Add(BuildStateDto(round.SharedBoard, player));
+                all.Add(BuildStateDto(round.SharedBoard, player,
+                    round.RoundScores.GetValueOrDefault(player.Id)));
         }
         else
         {
             foreach (var (playerId, board) in round.PlayerBoards)
             {
                 var p = board.Players.FirstOrDefault(pl => pl.Id == playerId);
-                if (p is not null) all.Add(BuildStateDto(board, p));
+                if (p is not null)
+                    all.Add(BuildStateDto(board, p,
+                        round.RoundScores.GetValueOrDefault(playerId)));
             }
         }
 
@@ -293,24 +306,41 @@ public class GameService
 
     private void FinalizeScores(GameRound round)
     {
-        if (round.Level == 12) return; // scored dynamically during play
-
-        foreach (var (playerId, board) in round.PlayerBoards)
+        // Collect all players from whichever board layout this level uses
+        IEnumerable<(string playerId, Player player)> AllBoardPlayers()
         {
-            var player = board.Players.FirstOrDefault(p => p.Id == playerId);
-            if (player is not null)
+            if (round.IsSharedBoard && round.SharedBoard is not null)
             {
-                // Mushroom points accumulate via player.CollectMushroom() already
-                round.RoundScores[playerId] =
-                    round.RoundScores.GetValueOrDefault(playerId) +
-                    player.MushroomsCollected;
+                foreach (var p in round.SharedBoard.Players)
+                    yield return (p.Id, p);
             }
+            else
+            {
+                foreach (var (playerId, board) in round.PlayerBoards)
+                {
+                    var p = board.Players.FirstOrDefault(pl => pl.Id == playerId);
+                    if (p is not null) yield return (playerId, p);
+                }
+            }
+        }
+
+        foreach (var (playerId, player) in AllBoardPlayers())
+        {
+            int pts = round.RoundScores.GetValueOrDefault(playerId);
+
+            // Mushrooms are worth 10 points each
+            pts += player.MushroomsCollected * 10;
+
+            // Each turn costs 1 point
+            pts -= player.TurnCount;
+
+            round.RoundScores[playerId] = pts;
         }
     }
 
     // ------------------------------------------------------------------ DTO builders
 
-    private object BuildStateDto(Board board, Player player)
+    private object BuildStateDto(Board board, Player player, int roundScore = 0)
     {
         var visibleCells = board.GetVisibleCells(player).Select(c => new
         {
@@ -334,6 +364,8 @@ public class GameService
             player.ShieldHealth,
             player.IsCrawling,
             player.MushroomsCollected,
+            player.HasReachedGoal,
+            RoundScore = roundScore,
             Backpack = player.Backpack.Items.Select(i => i.ItemType).ToList(),
             VisibleCells = visibleCells,
             BoardWidth = board.Width,
@@ -357,8 +389,20 @@ public class GameService
     {
         round.RoundId,
         round.Level,
-        Scores = round.RoundScores,
+        LevelName = LevelFactory.GetLevelName(round.Level),
+        Scores = round.RoundScores
+            .Select(kv => new
+            {
+                PlayerId = kv.Key,
+                TeamName = _session.GetPlayer(kv.Key)?.TeamName ?? kv.Key,
+                Score = kv.Value
+            })
+            .OrderByDescending(s => s.Score)
+            .ToList(),
         Cumulative = _session.CumulativeScores
+            .OrderByDescending(kv => kv.Value)
+            .Select(kv => new { Team = kv.Key, Score = kv.Value })
+            .ToList()
     };
 
     // ------------------------------------------------------------------ Public read helpers
@@ -377,6 +421,14 @@ public class GameService
             r.StartedAt,
             r.EndedAt,
             Scores = r.RoundScores
+                .Select(kv => new
+                {
+                    PlayerId = kv.Key,
+                    TeamName = _session.GetPlayer(kv.Key)?.TeamName ?? kv.Key,
+                    Score = kv.Value
+                })
+                .OrderByDescending(s => s.Score)
+                .ToList()
         }).ToList(),
         CurrentRound = _session.CurrentRound is { } cr ? MapRoundInfo(cr) : null
     };

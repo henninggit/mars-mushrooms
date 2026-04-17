@@ -18,6 +18,8 @@ export interface BoardStateDto {
   shieldHealth: number;
   isCrawling: boolean;
   mushroomsCollected: number;
+  hasReachedGoal: boolean;
+  roundScore: number;
   backpack: string[];
   visibleCells: CellDto[];
   boardWidth: number;
@@ -43,8 +45,9 @@ export interface ScoreEntry {
 export interface RoundScores {
   roundId: string;
   level: number;
-  scores: Record<string, number>;
-  cumulative: Record<string, number>;
+  levelName: string;
+  scores: Array<{ playerId: string; teamName: string; score: number }>;
+  cumulative: Array<{ team: string; score: number }>;
 }
 
 export interface Leaderboard {
@@ -52,9 +55,10 @@ export interface Leaderboard {
   rounds: Array<{
     roundId: string;
     level: number;
+    levelName: string;
     startedAt: string;
     endedAt: string;
-    scores: Record<string, number>;
+    scores: Array<{ playerId: string; teamName: string; score: number }>;
   }>;
   currentRound?: RoundInfo | null;
 }

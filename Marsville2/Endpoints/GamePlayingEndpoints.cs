@@ -166,7 +166,7 @@ public static class GamePlayingEndpoints
     {
         return result switch
         {
-            ActionResult.Ok or ActionResult.GoalReached =>
+            ActionResult.Ok or ActionResult.GoalReached or ActionResult.KilledEnemy =>
                 Results.Ok(new { result = result.ToString(), state }),
             ActionResult.NotPlaying =>
                 Results.BadRequest(new { error = "No active round or registration still open." }),

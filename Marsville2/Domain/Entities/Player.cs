@@ -22,6 +22,9 @@ public class Player : EntityBase
     // Health regeneration: regain 1 HP every 5 actions taken
     private int _actionCount;
     private readonly int _maxHealth;
+
+    /// <summary>Total number of actions this player has taken this round (used for -1/turn scoring).</summary>
+    public int TurnCount { get; private set; }
     private bool _isCrawling;
     public bool IsCrawling => _isCrawling;
 
@@ -66,6 +69,7 @@ public class Player : EntityBase
     public void RecordAction()
     {
         _actionCount++;
+        TurnCount++;
         if (_actionCount % 5 == 0 && Health < MaxHealth)
             Health = Math.Min(MaxHealth, Health + 1);
     }

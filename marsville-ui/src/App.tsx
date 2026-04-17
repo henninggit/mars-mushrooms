@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import AllBoards from "./components/AllBoards";
 import AdminPanel from "./components/AdminPanel";
 import Scoreboard from "./components/Scoreboard";
 import { useGameHub } from "./hooks/useGameHub";
-import type { BoardStateDto, RoundInfo, ScoreEntry } from "./types/game";
+import type { BoardStateDto, RoundInfo, RoundScores, ScoreEntry } from "./types/game";
 
 function App() {
   const [boards, setBoards] = useState<Map<string, BoardStateDto>>(new Map());
@@ -24,12 +24,13 @@ function App() {
       setBoards(new Map());
     }, []),
     onRoundEnded: useCallback(
-      (data: { cumulative: Record<string, number> }) => {
+      (data: RoundScores) => {
         setScores(
-          Object.entries(data.cumulative)
-            .map(([team, score]) => ({ team, score }))
+          data.cumulative
+            .map(({ team, score }) => ({ team, score }))
             .sort((a, b) => b.score - a.score),
         );
+        setCurrentRound(null);
       },
       [],
     ),
@@ -47,6 +48,14 @@ function App() {
         /* server may not be running yet */
       });
   }, []);
+
+  // Derive per-player round scores from live board states
+  const roundScores = useMemo<ScoreEntry[]>(() => {
+    if (boards.size === 0) return [];
+    return Array.from(boards.values())
+      .map((b) => ({ team: b.teamName, score: b.roundScore }))
+      .sort((a, b) => b.score - a.score);
+  }, [boards]);
 
   const boardList = Array.from(boards.values());
 
@@ -104,7 +113,10 @@ function App() {
           {showAdmin && (
             <AdminPanel onRoundStarted={() => setBoards(new Map())} />
           )}
-          <Scoreboard scores={scores} />
+          <Scoreboard
+            scores={scores}
+            roundScores={currentRound ? roundScores : undefined}
+          />
 
           {/* Level legend */}
           <div className="bg-stone-800 rounded-lg p-3 border border-orange-900">

@@ -21,6 +21,11 @@ A list of tasks.
       -- Each turn: -1 point
       -- Mushroom: Each mushroom gathered: +10 points
       -- Should show when every agent is done with a level (i.e. when not actively running a level) in the UI
+      Battle Royale scoring:
+      -- Last player alive: +100 points
+      -- Each kill: +20 points
+      -- Second player alive: +50 points (also on tie)
+      -- Third player alive: +25 points
 - [x] Bug: Character becomes invisible upon taking damage (or dealing damage?)
 - [x] Bug: Goal can be inaccessible => we need to re-factor the level gen. It should have these steps:
 - Generate map of size x \* y (walls)
@@ -30,6 +35,5 @@ A list of tasks.
 - Place reachable bridge build items
 - Place reachable mushrooms
 - [ ] gravestone death visual - maybe with like a "dark souls"/"gta" death overlay
-- [ ] fix battle royale level scoring
 - [ ] Shields does not work right. It should negate one attack, not increase health max. After negating an attack it should be lost. Also health should not auto-regen.
 - [ ] Add a "poison mushroom" that kills you when picked up.

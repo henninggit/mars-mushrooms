@@ -19,7 +19,8 @@ public enum ActionResult
     NothingToAttack,
     NotPlaying,
     PlayerDead,
-    GoalReached
+    GoalReached,
+    KilledEnemy
 }
 
 /// <summary>
@@ -234,7 +235,7 @@ public class BoardService
                 player.Y + Board.DirectionOffset(direction).dy) is null)
                 return ActionResult.NothingToAttack;
 
-            return ActionResult.Ok;
+            return killed.Count > 0 ? ActionResult.KilledEnemy : ActionResult.Ok;
         }
     }
 
