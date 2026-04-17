@@ -25,6 +25,7 @@ public class Board
 
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     public IReadOnlyList<Enemy> Enemies => _enemies.AsReadOnly();
+    public IEnumerable<CellBase> AllCells => _cells;
 
     public Board(int width, int height, int level, CellBase[] cells,
         int visionRadius = 0, int startX = 0, int startY = 0, bool isShared = false)
@@ -108,9 +109,9 @@ public class Board
     {
         var cell = GetCell(player.X, player.Y);
         var mushrooms = cell.Items.OfType<Mushroom>().ToList();
-        foreach (var mut in mushrooms)
+        foreach (var mush in mushrooms)
         {
-            cell.Items.Remove(mut);
+            cell.Items.Remove(mush);
             player.CollectMushroom();
         }
     }

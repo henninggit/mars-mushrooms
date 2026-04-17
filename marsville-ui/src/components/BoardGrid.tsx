@@ -42,7 +42,7 @@ export default function BoardGrid({ board }: BoardGridProps) {
         <CellEffectsCanvas board={board} />
         <EntityCanvas board={board} />
         {rows.map((row, ri) => (
-          <div key={ri} className="flex">
+          <div key={ri} className={`flex${board.health <= 0 ? ' grayscale brightness-50' : ''}`}>
             {row.map(({ col, row: rowIdx }) => {
               const cell = cellMap.get(`${col},${rowIdx}`);
               if (!cell) {
@@ -58,6 +58,19 @@ export default function BoardGrid({ board }: BoardGridProps) {
             })}
           </div>
         ))}
+        {board.health <= 0 && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 pointer-events-none select-none">
+            <span
+              className="text-red-600 font-black tracking-[0.2em] uppercase drop-shadow-[0_0_12px_rgba(220,38,38,0.9)]"
+              style={{ fontSize: 'clamp(1.1rem, 3vw, 1.75rem)' }}
+            >
+              YOU DIED
+            </span>
+            <span className="text-red-400 text-xs mt-1 tracking-widest uppercase opacity-80">
+              💀 Eliminated
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

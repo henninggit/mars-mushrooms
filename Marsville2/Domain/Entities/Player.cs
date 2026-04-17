@@ -7,7 +7,7 @@ namespace Marsville2.Domain.Entities;
 /// </summary>
 public class Player : EntityBase
 {
-    public override int MaxHealth => _maxHealth + ShieldHealth;
+    public override int MaxHealth => _maxHealth;
     public override string EntityType => "player";
 
     public string TeamName { get; }
@@ -19,7 +19,6 @@ public class Player : EntityBase
     /// <summary>True once the player has stepped onto the goal cell for this round.</summary>
     public bool HasReachedGoal { get; private set; }
 
-    // Health regeneration: regain 1 HP every 5 actions taken
     private int _actionCount;
     private readonly int _maxHealth;
 
@@ -28,7 +27,7 @@ public class Player : EntityBase
     private bool _isCrawling;
     public bool IsCrawling => _isCrawling;
 
-    /// <summary>Additive bonus max health from collected shields.</summary>
+    /// <summary>Number of shield charges remaining. Each charge absorbs one incoming attack.</summary>
     public int ShieldHealth { get; private set; }
 
     public Player(string id, string teamName, string token, int x, int y, int maxHealth = 2)
@@ -39,17 +38,28 @@ public class Player : EntityBase
         _maxHealth = maxHealth;
     }
 
-    /// <summary>
-    /// Increases maximum health by 1 (shield bonus) and immediately heals 1 HP.
-    /// </summary>
-    public void AddShield()
-    {
-        ShieldHealth++;
-        Health = Math.Min(MaxHealth, Health + 1);
-    }
+    /// <summary>Adds one shield charge. Shields negate incoming attacks one-for-one and are lost on use.</summary>
+    public void AddShield() => ShieldHealth++;
 
     /// <summary>Restores health to the current maximum (used by health packs).</summary>
     public void HealToFull() => Health = MaxHealth;
+
+    /// <summary>
+    /// Override: if a shield charge is available, absorb the hit and lose one shield.
+    /// Otherwise deal the damage normally.
+    /// </summary>
+    public override bool TakeDamage(int amount)
+    {
+        if (ShieldHealth > 0)
+        {
+            ShieldHealth--;
+            return false; // absorbed — player survives
+        }
+        return base.TakeDamage(amount);
+    }
+
+    /// <summary>Instantly kills the player, bypassing any shield charges (e.g. poison).</summary>
+    public void ApplyPoison() => Health = 0;
 
     public void CollectMushroom()
     {
@@ -64,13 +74,10 @@ public class Player : EntityBase
 
     /// <summary>
     /// Called after every action the player performs.
-    /// Every 5 actions, gain 1 HP (up to MaxHealth).
     /// </summary>
     public void RecordAction()
     {
         _actionCount++;
         TurnCount++;
-        if (_actionCount % 5 == 0 && Health < MaxHealth)
-            Health = Math.Min(MaxHealth, Health + 1);
     }
 }

@@ -74,7 +74,8 @@ public static class LevelFactory
         int RoomCount = 0,
         int HealthPackCount = 0,
         int ShieldCount = 0,
-        int TeleporterCount = 0
+        int TeleporterCount = 0,
+        int PoisonMushroomCount = 0
     );
 
     // ------------------------------------------------------------------ Level definitions
@@ -106,29 +107,29 @@ public static class LevelFactory
     private static Board CreateLevel7(int seed) =>
         BuildGridLevel(new LevelConfig(14, 12, 7, VisionRadius: 3,
             BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, RoomCount: 3,
-            HealthPackCount: 1, ShieldCount: 1), seed);
+            HealthPackCount: 1, ShieldCount: 1, PoisonMushroomCount: 1), seed);
 
     private static Board CreateLevel8(int seed) =>
         BuildGridLevel(new LevelConfig(14, 12, 8, VisionRadius: 3,
             BrokenBridgeCount: 4, LowObstacleCount: 4, MushroomCount: 2, EnemyCount: 3, RoomCount: 3,
-            HealthPackCount: 1, ShieldCount: 1), seed);
+            HealthPackCount: 1, ShieldCount: 1, PoisonMushroomCount: 1), seed);
 
     private static Board CreateLevel9(int seed) =>
         BuildGridLevel(new LevelConfig(21, 19, 9, VisionRadius: 1,
             BrokenBridgeCount: 1, RoomCount: 1,
-            HealthPackCount: 1, ShieldCount: 1), seed);
+            HealthPackCount: 1, ShieldCount: 1, PoisonMushroomCount: 1), seed);
 
     /// <summary>Level 10 — Warp Nexus: a teleporter maze with 4 linked teleporter pads.</summary>
     private static Board CreateLevel10(int seed) =>
         BuildGridLevel(new LevelConfig(16, 14, 10, VisionRadius: 3,
             BrokenBridgeCount: 2, LowObstacleCount: 2, MushroomCount: 3, RoomCount: 2,
-            HealthPackCount: 1, ShieldCount: 1, TeleporterCount: 4), seed);
+            HealthPackCount: 1, ShieldCount: 1, TeleporterCount: 4, PoisonMushroomCount: 1), seed);
 
     /// <summary>Level 11 — Colony Convergence: shared board, all players compete.</summary>
     private static Board CreateLevel11(int seed) =>
         BuildGridLevel(new LevelConfig(18, 16, 11, VisionRadius: 3, IsShared: true,
             BrokenBridgeCount: 3, LowObstacleCount: 3, MushroomCount: 6, EnemyCount: 4, RoomCount: 3,
-            HealthPackCount: 1, ShieldCount: 1), seed);
+            HealthPackCount: 1, ShieldCount: 1, PoisonMushroomCount: 2), seed);
 
     public static Board CreateHighlevel(int level, int seed)
     {
@@ -208,6 +209,10 @@ public static class LevelFactory
         AddShield(11, 11);
         AddShield(13, 11);
         AddShield(11, 13);
+
+        // Two poison mushrooms hidden in the corners to punish careless foraging
+        flat[3 * w + 3].Items.Add(new PoisonMushroom());
+        flat[3 * w + 18].Items.Add(new PoisonMushroom());
 
         return new Board(w, h, 12, flat, visionRadius: 3, isShared: true);
     }
@@ -385,6 +390,13 @@ public static class LevelFactory
             PlaceShields(board, reachable, spawnX, spawnY, cfg.ShieldCount, rng);
         }
 
+        // Step 14: place poison mushrooms (placed last so they can share cells with normal items)
+        if (cfg.PoisonMushroomCount > 0)
+        {
+            var (reachable, _) = BfsReachable(board, spawnX, spawnY, AllBridgePositions(board));
+            PlacePoisonMushrooms(board, reachable, spawnX, spawnY, cfg.PoisonMushroomCount, rng);
+        }
+
         return board;
     }
 
@@ -548,6 +560,31 @@ public static class LevelFactory
             board.GetCell(x, y).Items.Add(new Mushroom());
             pool.RemoveAt(idx);
             pool.RemoveAll(p => ManhattanDistance(p.x, p.y, x, y) < 2);
+        }
+    }
+
+    // ------------------------------------------------------------------ Helper: place poison mushrooms
+
+    /// <summary>
+    /// Adds <see cref="PoisonMushroom"/> items to <paramref name="count"/> reachable cells,
+    /// skipping spawn and goal. Poison mushrooms are spread to avoid clustering with each other.
+    /// They may share cells with normal mushrooms to act as camouflage.
+    /// </summary>
+    private static void PlacePoisonMushrooms(Board board, HashSet<(int x, int y)> reachable,
+        int spawnX, int spawnY, int count, Random rng)
+    {
+        var pool = reachable
+            .Where(p => board.GetCell(p.x, p.y) is FloorCell
+                        && !(p.x == spawnX && p.y == spawnY))
+            .ToList();
+
+        for (int i = 0; i < count && pool.Count > 0; i++)
+        {
+            int idx = rng.Next(pool.Count);
+            var (x, y) = pool[idx];
+            board.GetCell(x, y).Items.Add(new PoisonMushroom());
+            pool.RemoveAt(idx);
+            pool.RemoveAll(p => ManhattanDistance(p.x, p.y, x, y) < 3);
         }
     }
 

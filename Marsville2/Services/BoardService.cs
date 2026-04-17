@@ -71,6 +71,7 @@ public class BoardService
             player.Y = ny;
             ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
+            if (!player.IsAlive) return ActionResult.PlayerDead;
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
@@ -108,6 +109,7 @@ public class BoardService
             player.Y = landY;
             ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
+            if (!player.IsAlive) return ActionResult.PlayerDead;
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
@@ -139,6 +141,7 @@ public class BoardService
             player.SetCrawling(cell is LowObstacleCell);
             ApplyTeleporter(player);
             _board.CollectMushroomsAt(player);
+            if (!player.IsAlive) return ActionResult.PlayerDead;
             player.RecordAction();
             _enemyAi.MoveEnemies(player);
 
@@ -156,8 +159,21 @@ public class BoardService
             if (player.HasReachedGoal) return ActionResult.GoalReached;
 
             var cell = _board.GetCell(player.X, player.Y);
-            var item = cell.Items.FirstOrDefault(i => i is not Mushroom); // mushrooms auto-collect on move
-            if (item is null) return ActionResult.NoItemToPickUp;
+            // Prefer non-mushroom, non-poison items (plank, nail, health, shield).
+            // Poison mushrooms are only "picked up" when nothing else is available — and that kills the player.
+            var item = cell.Items.FirstOrDefault(i => i is not Mushroom and not PoisonMushroom);
+            if (item is null)
+            {
+                var poison = cell.Items.OfType<PoisonMushroom>().FirstOrDefault();
+                if (poison is not null)
+                {
+                    cell.Items.Remove(poison);
+                    player.ApplyPoison();
+                    _board.RemovePlayer(player);
+                    return ActionResult.PlayerDead;
+                }
+                return ActionResult.NoItemToPickUp;
+            }
 
             cell.Items.Remove(item);
 

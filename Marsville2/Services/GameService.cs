@@ -72,9 +72,8 @@ public class GameService
                 int idx = 0;
                 foreach (var (playerId, player) in _session.Players)
                 {
-                    var maxHealth = round.Level == 12 ? 3 : 2;
                     var boardPlayer = new Player(playerId, player.TeamName, player.Token,
-                        1 + idx * 2, 1, maxHealth);
+                        1 + idx * 2, 1, 2);
                     board.AddPlayer(boardPlayer);
                     _boardServices[playerId] = svc;
                     idx++;

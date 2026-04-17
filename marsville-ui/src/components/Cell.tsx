@@ -34,6 +34,7 @@ const ITEM_ICONS: Record<string, string> = {
   nail: '📌',
   health: '❤️‍🩹',
   shield: '🛡️',
+  poison_mushroom: '☠️',
 };
 
 export default function Cell({ cell, isPlayerPos, hideEntity }: CellProps) {

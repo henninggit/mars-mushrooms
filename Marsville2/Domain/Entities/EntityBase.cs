@@ -18,7 +18,7 @@ public abstract class EntityBase : IEntity
         Health = health;
     }
 
-    public bool TakeDamage(int amount)
+    public virtual bool TakeDamage(int amount)
     {
         Health = Math.Max(0, Health - amount);
         return !IsAlive;
