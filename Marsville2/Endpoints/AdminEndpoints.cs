@@ -101,6 +101,30 @@ public static class AdminEndpoints
             return op;
         });
 
+        // POST /api/admin/leaderboard/reset
+        group.MapPost("/leaderboard/reset", (HttpContext ctx,
+            GameSession session, GameService gameService, IConfiguration config) =>
+        {
+            if (!ValidateAdmin(ctx, session, config)) return Results.Unauthorized();
+
+            try
+            {
+                gameService.ResetLeaderboard();
+                return Results.Ok(new { message = "Leaderboard reset successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+        })
+        .WithName("AdminResetLeaderboard")
+        .WithOpenApi(op =>
+        {
+            op.Summary = "[Admin] Reset the leaderboard";
+            op.Description = "Zeroes all cumulative scores, clears round history, and resets every player's total score. Cannot be called while a round is playing. Registered players and tokens are preserved. Requires X-Admin-Password header.";
+            return op;
+        });
+
         return app;
     }
 

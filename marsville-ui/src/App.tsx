@@ -111,7 +111,10 @@ function App() {
         {/* Sidebar */}
         <aside className="w-72 flex-shrink-0 overflow-auto p-4 space-y-4 border-l border-orange-900 bg-stone-900">
           {showAdmin && (
-            <AdminPanel onRoundStarted={() => setBoards(new Map())} />
+            <AdminPanel
+              onRoundStarted={() => setBoards(new Map())}
+              onLeaderboardReset={() => setScores([])}
+            />
           )}
           <Scoreboard
             scores={scores}

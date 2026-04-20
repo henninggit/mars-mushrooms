@@ -19,9 +19,10 @@ const LEVEL_NAMES: Record<number, string> = {
 
 interface AdminPanelProps {
   onRoundStarted?: () => void;
+  onLeaderboardReset?: () => void;
 }
 
-export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
+export default function AdminPanel({ onRoundStarted, onLeaderboardReset }: AdminPanelProps) {
   const [password, setPassword] = useState("");
   const [level, setLevel] = useState(1);
   const [timeout, setTimeout_] = useState(300);
@@ -76,6 +77,23 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
     const data = await res.json();
     if (res.ok) setMessage(data.message);
     else setError(data.error ?? "Failed to end round");
+  }
+
+  async function resetLeaderboard() {
+    if (!window.confirm("Reset the leaderboard? This will zero all scores and clear round history."))
+      return;
+    setMessage(null);
+    setError(null);
+    const res = await fetch(`${API_BASE}/leaderboard/reset`, {
+      method: "POST",
+      headers: headers(),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setMessage(data.message);
+      onLeaderboardReset?.();
+    }
+    else setError(data.error ?? "Failed to reset leaderboard");
   }
 
   return (
@@ -150,6 +168,15 @@ export default function AdminPanel({ onRoundStarted }: AdminPanelProps) {
           className="bg-red-800 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
         >
           Force End
+        </button>
+      </div>
+
+      <div className="border-t border-orange-900 pt-3">
+        <button
+          onClick={resetLeaderboard}
+          className="bg-stone-700 hover:bg-stone-600 text-orange-300 hover:text-orange-100 text-sm px-3 py-1 rounded border border-orange-900"
+        >
+          Reset Leaderboard
         </button>
       </div>
 

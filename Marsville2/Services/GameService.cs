@@ -406,6 +406,20 @@ public class GameService
 
     // ------------------------------------------------------------------ Public read helpers
 
+    /// <summary>
+    /// Resets all cumulative scores and round history. Cannot be called while a round is playing.
+    /// </summary>
+    public void ResetLeaderboard()
+    {
+        lock (_globalLock)
+        {
+            if (_session.CurrentRound?.Phase == RoundPhase.Playing)
+                throw new InvalidOperationException("Cannot reset the leaderboard while a round is in progress.");
+
+            _session.ResetLeaderboard();
+        }
+    }
+
     public object GetLeaderboard() => new
     {
         Cumulative = _session.CumulativeScores

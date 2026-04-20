@@ -69,6 +69,18 @@ public class GameSession
         CurrentRound = null;
     }
 
+    /// <summary>
+    /// Resets all cumulative scores, clears completed round history, and zeroes every
+    /// registered player's total score. Registered players and their tokens are preserved.
+    /// </summary>
+    public void ResetLeaderboard()
+    {
+        CumulativeScores.Clear();
+        CompletedRounds.Clear();
+        foreach (var player in _players.Values)
+            player.TotalScore = 0;
+    }
+
     public bool ValidateAdminPassword(string password, IConfiguration configuration)
     {
         var expected = configuration["AdminPassword"];
