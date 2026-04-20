@@ -6,7 +6,7 @@ namespace Marsville2.Domain;
 
 /// <summary>
 /// Represents the play area for a single player's instance of a level
-/// (or the shared board for levels 9 and 10).
+/// (or the shared board for levels 11 and 12).
 /// The grid is stored as a flat array indexed by [y * Width + x].
 /// </summary>
 public class Board

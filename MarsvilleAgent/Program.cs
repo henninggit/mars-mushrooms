@@ -1,15 +1,16 @@
 ﻿/*  MarsvilleAgent -- simple heuristic test agent for the Marsville game server.
  *
  *  Usage:
- *    dotnet run -- [teamName] [serverUrl] [agentCount]
+ *    dotnet run -- [teamName] [serverUrl] [agentCount] [registrationKey]
  *
  *  Examples:
- *    dotnet run                                  # 1 bot "TestBot-1" vs localhost
- *    dotnet run -- TeamRocket                    # named team
- *    dotnet run -- Bot http://localhost:5181 3   # 3 bots, explicit server
+ *    dotnet run                                              # 1 bot "TestBot-1" vs localhost
+ *    dotnet run -- TeamRocket                               # named team
+ *    dotnet run -- Bot http://localhost:5181 3              # 3 bots, explicit server
+ *    dotnet run -- Bot https://marsville.azurewebsites.net 1 mysecret   # Azure + registration key
  *
  *  The agent:
- *    1. Registers with the server.
+ *    1. Registers with the server (sends X-Registration-Key if a key is provided).
  *    2. Polls game state every 300 ms.
  *    3. Acts greedily toward the goal:
  *       - Picks up any Plank/Nail on the current cell.
@@ -28,16 +29,17 @@ using System.Text.Json.Serialization;
 const string DefaultServer = "http://localhost:5181";
 
 // --- Parse args ---
-string rawTeam  = args.Length > 0 ? args[0] : "TestBot";
-string server   = args.Length > 1 ? args[1] : DefaultServer;
-int agentCount  = args.Length > 2 ? int.Parse(args[2]) : 1;
+string rawTeam         = args.Length > 0 ? args[0] : "TestBot";
+string server          = args.Length > 1 ? args[1] : DefaultServer;
+int agentCount         = args.Length > 2 ? int.Parse(args[2]) : 1;
+string? registrationKey = args.Length > 3 ? args[3] : null;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 Console.WriteLine($"Marsville Test Agent  |  server={server}  agents={agentCount}");
 
 // Spawn multiple agents in parallel if requested
 var tasks = Enumerable.Range(1, agentCount)
-    .Select(i => RunAgent($"{rawTeam}-{i}", server))
+    .Select(i => RunAgent($"{rawTeam}-{i}", server, registrationKey))
     .ToArray();
 
 await Task.WhenAll(tasks);
@@ -45,13 +47,13 @@ Console.WriteLine("All agents finished.");
 
 // ---------------------------------------------------------------------------
 
-static async Task RunAgent(string teamName, string server)
+static async Task RunAgent(string teamName, string server, string? registrationKey)
 {
     using var http = new HttpClient { BaseAddress = new Uri(server) };
     http.Timeout = TimeSpan.FromSeconds(10);
 
     // ── Register (once; re-registers automatically on token invalidation) ──
-    await Register(http, teamName);
+    await Register(http, teamName, registrationKey);
 
     // ── Lobby loop: play every round, then wait for the next one ──
     while (true)
@@ -67,7 +69,7 @@ static async Task RunAgent(string teamName, string server)
             {
                 // Token no longer valid (server restarted) — re-register
                 Console.WriteLine($"[{teamName}] Token rejected, re-registering...");
-                await Register(http, teamName);
+                await Register(http, teamName, registrationKey);
             }
             state = fetchedState;
         }
@@ -85,7 +87,7 @@ static async Task RunAgent(string teamName, string server)
             if (unauth)
             {
                 Console.WriteLine($"[{teamName}] Token rejected mid-round, re-registering...");
-                await Register(http, teamName);
+                await Register(http, teamName, registrationKey);
                 break; // go back to lobby wait
             }
 
@@ -125,7 +127,7 @@ static async Task RunAgent(string teamName, string server)
                 {
                     await Task.Delay(1000);
                     var (endState, endUnauth) = await FetchState(http, teamName);
-                    if (endUnauth) { await Register(http, teamName); break; }
+                    if (endUnauth) { await Register(http, teamName, registrationKey); break; }
                     if (endState is null || endState.Level.ToString() != lastRoundLevel) break;
                 }
                 Console.WriteLine($"[{teamName}] Round ended. Returning to lobby.");
@@ -149,7 +151,7 @@ static async Task RunAgent(string teamName, string server)
     }
 }
 
-static async Task Register(HttpClient http, string teamName)
+static async Task Register(HttpClient http, string teamName, string? registrationKey)
 {
     // Remove any previous token header before re-registering
     http.DefaultRequestHeaders.Remove("X-Player-Token");
@@ -158,7 +160,12 @@ static async Task Register(HttpClient http, string teamName)
     {
         try
         {
-            var reg = await http.PostAsJsonAsync("/api/players/register", new { teamName });
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/players/register");
+            req.Content = JsonContent.Create(new { teamName });
+            if (!string.IsNullOrEmpty(registrationKey))
+                req.Headers.Add("X-Registration-Key", registrationKey);
+
+            var reg = await http.SendAsync(req);
             if (reg.IsSuccessStatusCode)
             {
                 var body = await reg.Content.ReadFromJsonAsync<JsonElement>();

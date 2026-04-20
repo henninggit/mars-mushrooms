@@ -1,6 +1,8 @@
 import { useState } from "react";
 
-const API_BASE = "/api/admin";
+import { apiBase } from '../config';
+
+const API_BASE = `${apiBase}/api/admin`;
 
 const LEVEL_NAMES: Record<number, string> = {
   1: "Dust & Boots",

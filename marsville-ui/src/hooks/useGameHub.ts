@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import type { BoardStateDto, RoundInfo, RoundScores } from '../types/game';
+import { hubUrl } from '../config';
 
 interface GameHubEvents {
   onBoardUpdated?: (playerId: string, state: BoardStateDto) => void;
@@ -15,7 +16,7 @@ export function useGameHub(handlers: GameHubEvents) {
 
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/game')
+      .withUrl(hubUrl)
       .withAutomaticReconnect()
       .build();
 

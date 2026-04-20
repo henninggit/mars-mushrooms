@@ -3,7 +3,7 @@ A list of tasks.
 - [x] Fix bug where player can spawn in walls
 - [x] Fix bug where some levels are generated with broken bridges, but not enough "hammers and nails" to fix them
 - [x] Setup proper scaffolding for the agent which makes it easy for the participants to implement their own agents
-- [ ] In the last level, add a "warning square" before a cell becomes wall
+- [x] In the last level, add a "warning square" before a cell becomes wall
 - [x] Add a "dark" maze level (low sight radius requiring memorya and exploration)
 - [x] Add a level with a "teleporter" cell that teleports the player to another location on the map
 - [x] Ensure maze-like constructs and "columns" can be generated in levels
@@ -15,7 +15,7 @@ A list of tasks.
 - [x] Add level names which get displayed in the UI which sets the tone for the level
 - [x] Players can move after reaching goal
 - [x] Round does not end on everyone reaching goal
-- [ ] Leaderboard
+- [x] Leaderboard
       -- Includes better scoring. Rules:
       -- Complete level: +100 points
       -- Each turn: -1 point
@@ -26,6 +26,7 @@ A list of tasks.
       -- Each kill: +20 points
       -- Second player alive: +50 points (also on tie)
       -- Third player alive: +25 points
+- [x] reset leaderboard button
 - [x] Bug: Character becomes invisible upon taking damage (or dealing damage?)
 - [x] Bug: Goal can be inaccessible => we need to re-factor the level gen. It should have these steps:
 - Generate map of size x \* y (walls)
@@ -34,6 +35,8 @@ A list of tasks.
 - Place reachable bridges
 - Place reachable bridge build items
 - Place reachable mushrooms
-- [ ] gravestone death visual - maybe with like a "dark souls"/"gta" death overlay
-- [ ] Shields does not work right. It should negate one attack, not increase health max. After negating an attack it should be lost. Also health should not auto-regen.
-- [ ] Add a "poison mushroom" that kills you when picked up.
+- [x] gravestone death visual - maybe with like a "dark souls"/"gta" death overlay
+- [x] Shields does not work right. It should negate one attack, not increase health max. After negating an attack it should be lost. Also health should not auto-regen.
+- [x] Add a "poison mushroom" that kills you when picked up.
+- [ ] Write a reference document for the rules as a handout
+- [ ] Maybe some boilerplate stuff to do machine learning? Like a simple DQN agent that can be trained on the game, and a guide for how to implement your own agent. This is not strictly necessary, but it could be a nice bonus for participants who are interested in that.

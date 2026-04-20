@@ -5,6 +5,7 @@ import AdminPanel from "./components/AdminPanel";
 import Scoreboard from "./components/Scoreboard";
 import { useGameHub } from "./hooks/useGameHub";
 import type { BoardStateDto, RoundInfo, RoundScores, ScoreEntry } from "./types/game";
+import { apiBase } from "./config";
 
 function App() {
   const [boards, setBoards] = useState<Map<string, BoardStateDto>>(new Map());
@@ -38,7 +39,7 @@ function App() {
 
   // Fetch initial leaderboard on mount
   useEffect(() => {
-    fetch("/api/game/rounds")
+    fetch(`${apiBase}/api/game/rounds`)
       .then((r) => r.json())
       .then((data) => {
         if (data.cumulative) setScores(data.cumulative);
