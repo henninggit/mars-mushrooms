@@ -131,6 +131,13 @@ public static class AStarPathfinder
                         nx, ny, EdgeCost(nx, ny, state, memory));
                     break;
 
+                // Warning cells are walkable but dangerous — penalise heavily so the agent
+                // routes inward whenever an alternative path exists.
+                case CellType.Warning:
+                    yield return (new PossibleAction(ActionType.Move, dir, nx, ny, $"Move {dir} (warning!)"),
+                        nx, ny, EdgeCost(nx, ny, state, memory) + 10);
+                    break;
+
                 case CellType.LowObstacle:
                     yield return (new PossibleAction(ActionType.Crawl, dir, nx, ny, $"Crawl {dir}"),
                         nx, ny, EdgeCost(nx, ny, state, memory));

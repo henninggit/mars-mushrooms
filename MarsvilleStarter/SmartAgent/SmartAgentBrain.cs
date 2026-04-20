@@ -59,7 +59,7 @@ public sealed class SmartAgentBrain
         {
             var easyGrabItemCells = _memory.GetCellsWithItems()
                 .Where(x => !x.Items.All(x => x == "health") || state.Health < state.MaxHealth)
-                .Where(x => !x.Items.All(x => x == "poision_mushroom"))
+                .Where(x => !x.Items.All(x => x == "poison_mushroom"))
                 .Select(c => (c.X, c.Y))
                 .Where(x => Math.Abs(x.X - state.X) + Math.Abs(x.Y - state.Y) < 2).ToList();
 

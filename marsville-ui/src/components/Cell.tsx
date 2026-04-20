@@ -15,6 +15,7 @@ const CELL_ICONS: Record<string, string> = {
   wall: '',
   goal: '🚀',
   teleporter: '🌀',
+  warning: '⚠️',
 };
 
 const CELL_BG: Record<string, string> = {
@@ -26,6 +27,7 @@ const CELL_BG: Record<string, string> = {
   wall: 'bg-gray-700',
   goal: 'bg-green-400',
   teleporter: 'bg-purple-500',
+  warning: 'bg-red-500',
 };
 
 const ITEM_ICONS: Record<string, string> = {

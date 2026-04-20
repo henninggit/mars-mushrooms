@@ -16,6 +16,12 @@ public enum CellType
     [JsonStringEnumMemberName("low_obstacle")]  LowObstacle,
     [JsonStringEnumMemberName("goal")]          Goal,
     [JsonStringEnumMemberName("teleporter")]    Teleporter,
+    /// <summary>
+    /// Outermost ring of the battle-royale board (level 12) that is about to
+    /// become a wall on the next shrink. Still walkable — evacuate before the
+    /// next shrink timer fires.
+    /// </summary>
+    [JsonStringEnumMemberName("warning")]       Warning,
 }
 
 /// <summary>

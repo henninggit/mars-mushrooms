@@ -42,9 +42,14 @@ public class CellView
     public bool IsLowObstacle    => CellType == CellType.LowObstacle;
     public bool IsGoal           => CellType == CellType.Goal;
     public bool IsTeleporter     => CellType == CellType.Teleporter;
-    public bool IsWalkable       => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.Teleporter;
+    /// <summary>
+    /// <c>true</c> when this cell is the next ring to be walled off in the level 12
+    /// battle royale. Still walkable this turn — move inward before the next shrink!
+    /// </summary>
+    public bool IsWarning        => CellType == CellType.Warning;
+    public bool IsWalkable       => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.Teleporter or CellType.Warning;
     public bool IsJumpable       => CellType == CellType.Hole;
-    public bool IsCrawlable      => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.LowObstacle or CellType.Teleporter;
+    public bool IsCrawlable      => CellType is CellType.Floor or CellType.Bridge or CellType.Goal or CellType.LowObstacle or CellType.Teleporter or CellType.Warning;
     public bool HasItems         => Items.Count > 0;
     public bool HasEnemy         => Entity?.IsEnemy == true;
 

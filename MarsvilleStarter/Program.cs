@@ -32,7 +32,7 @@
  *
  *  Cell shorthand properties (on CellView):
  *    cell.IsFloor / .IsHole / .IsWall / .IsBrokenBridge / .IsBridge
- *    cell.IsLowObstacle / .IsGoal / .IsTeleporter / .IsWalkable / .IsJumpable / .IsCrawlable
+ *    cell.IsLowObstacle / .IsGoal / .IsTeleporter / .IsWarning / .IsWalkable / .IsJumpable / .IsCrawlable
  *    cell.HasItems / .HasEnemy / .Items / .Entity
  * ───────────────────────────────────────────────────────────────────────────
  */

@@ -3,7 +3,7 @@
 export interface CellDto {
   x: number;
   y: number;
-  cellType: 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal' | 'teleporter';
+  cellType: 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal' | 'teleporter' | 'warning';
   items: string[];
   entity?: { entityType: 'player' | 'enemy'; id: string; health: number } | null;
 }

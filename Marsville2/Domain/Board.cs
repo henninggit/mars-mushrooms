@@ -63,14 +63,30 @@ public class Board
     public Enemy? GetEnemyAt(int x, int y) => _enemies.FirstOrDefault(e => e.X == x && e.Y == y);
 
     /// <summary>
-    /// Shrinks the board by removing the outermost ring of cells (replacing with WallCells).
-    /// Used in level 10 battle royale.
+    /// Shrinks the board by converting any existing <see cref="WarningCell"/>s to
+    /// <see cref="WallCell"/>s, then marks the new outermost ring as warning cells.
+    /// Used in level 12 (battle royale). Call <see cref="MarkWarningRing"/> once at
+    /// round start so players see the first warning before the initial shrink fires.
     /// </summary>
     public bool ShrinkBorder()
     {
-        // Find the current active (non-wall) bounds
+        // Step 1: Convert existing warning cells to walls (actual shrink).
+        foreach (var cell in _cells.OfType<WarningCell>().ToList())
+            SetCell(cell.X, cell.Y, new WallCell(cell.X, cell.Y));
+
+        // Step 2: Mark the new outermost non-wall ring as warning.
+        return MarkWarningRing();
+    }
+
+    /// <summary>
+    /// Marks the outermost non-wall ring as <see cref="WarningCell"/>s without
+    /// immediately shrinking. Use this at round start to give players advance notice
+    /// of the first upcoming shrink.
+    /// </summary>
+    public bool MarkWarningRing()
+    {
+        // Locate the outermost ring that hasn't been walled yet.
         int minX = 0, minY = 0, maxX = Width - 1, maxY = Height - 1;
-        // Find filled border to determine how far we've shrunk
         while (minX <= maxX && _cells[minY * Width + minX] is WallCell)
         {
             minX++; minY++; maxX--; maxY--;
@@ -79,13 +95,17 @@ public class Board
 
         for (int x = minX; x <= maxX; x++)
         {
-            SetCell(x, minY, new WallCell(x, minY));
-            SetCell(x, maxY, new WallCell(x, maxY));
+            if (_cells[minY * Width + x] is not WallCell)
+                SetCell(x, minY, new WarningCell(x, minY));
+            if (_cells[maxY * Width + x] is not WallCell)
+                SetCell(x, maxY, new WarningCell(x, maxY));
         }
         for (int y = minY + 1; y <= maxY - 1; y++)
         {
-            SetCell(minX, y, new WallCell(minX, y));
-            SetCell(maxX, y, new WallCell(maxX, y));
+            if (_cells[y * Width + minX] is not WallCell)
+                SetCell(minX, y, new WarningCell(minX, y));
+            if (_cells[y * Width + maxX] is not WallCell)
+                SetCell(maxX, y, new WarningCell(maxX, y));
         }
         return true;
     }

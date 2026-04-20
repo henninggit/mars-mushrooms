@@ -95,7 +95,10 @@ public class GameService
             round.Start();
 
             if (round.Level == 12)
+            {
                 StartShrinkTimer();
+                round.SharedBoard?.MarkWarningRing();
+            }
 
             // Setup auto-end on timeout
             _ = Task.Delay(TimeSpan.FromSeconds(round.TimeoutSeconds))
