@@ -8,10 +8,10 @@
     <RootNamespace>MarsvilleStarter</RootNamespace>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <!-- Exclude the SmartAgent subfolder from this project's compilation -->
-    <Compile Remove="SmartAgent\**\*.cs" />
+    <Compile Remove="SmartAgent\**" />
+    <EmbeddedResource Remove="SmartAgent\**" />
+    <None Remove="SmartAgent\**" />
   </ItemGroup>
 
 </Project>
