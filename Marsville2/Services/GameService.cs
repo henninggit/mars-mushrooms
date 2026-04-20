@@ -17,7 +17,7 @@ public class GameService
     private readonly IHubContext<GameHub> _hub;
     private readonly ILogger<GameService> _logger;
 
-    // playerId -> BoardService (level 1-8: one per player; level 9-10: all point to the same one)
+    // playerId -> BoardService (level 1-10: one per player; level 11-12: all point to the same one)
     private readonly Dictionary<string, BoardService> _boardServices = new();
     private readonly object _globalLock = new();
 
@@ -68,12 +68,13 @@ public class GameService
                 round.SetSharedBoard(board);
                 var svc = new BoardService(board);
 
-                // Place players at spread-out start positions
+                // Place players at spread-out start positions found via BFS from the board spawn
+                var spawnPositions = FindSpreadSpawnPositions(board, _session.Players.Count);
                 int idx = 0;
                 foreach (var (playerId, player) in _session.Players)
                 {
-                    var boardPlayer = new Player(playerId, player.TeamName, player.Token,
-                        1 + idx * 2, 1, 2);
+                    var (sx, sy) = spawnPositions[idx % spawnPositions.Count];
+                    var boardPlayer = new Player(playerId, player.TeamName, player.Token, sx, sy, 2);
                     board.AddPlayer(boardPlayer);
                     _boardServices[playerId] = svc;
                     idx++;
@@ -219,6 +220,53 @@ public class GameService
     }
 
     // ------------------------------------------------------------------ Level 10 logic
+
+    /// <summary>
+    /// Finds up to <paramref name="count"/> spread-out walkable floor positions on a shared
+    /// board by doing a BFS from the board's designated start cell and picking every
+    /// Nth reachable floor cell so that players start as far apart as possible.
+    /// Falls back to the start position itself if the board has too few walkable cells.
+    /// </summary>
+    private static List<(int x, int y)> FindSpreadSpawnPositions(Board board, int count)
+    {
+        // BFS from the board's start to collect all reachable walkable cells in visit order
+        var visited = new HashSet<(int, int)>();
+        var queue = new Queue<(int x, int y)>();
+        var reachable = new List<(int x, int y)>();
+        var start = (board.StartX, board.StartY);
+        queue.Enqueue(start);
+        visited.Add(start);
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, -1, 1 };
+        while (queue.Count > 0)
+        {
+            var (cx, cy) = queue.Dequeue();
+            var cell = board.GetCell(cx, cy);
+            if (cell.IsWalkable)
+                reachable.Add((cx, cy));
+            foreach (var (ddx, ddy) in dx.Zip(dy))
+            {
+                int nx = cx + ddx, ny = cy + ddy;
+                if (board.InBounds(nx, ny) && !visited.Contains((nx, ny)))
+                {
+                    var nc = board.GetCell(nx, ny);
+                    if (nc.IsWalkable)
+                    {
+                        visited.Add((nx, ny));
+                        queue.Enqueue((nx, ny));
+                    }
+                }
+            }
+        }
+        if (reachable.Count == 0)
+            return Enumerable.Repeat((board.StartX, board.StartY), count).ToList();
+        // Spread picks: stride through the reachable list so players start far apart
+        int stride = Math.Max(1, reachable.Count / count);
+        var result = new List<(int, int)>(count);
+        for (int i = 0; i < count; i++)
+            result.Add(reachable[Math.Min(i * stride, reachable.Count - 1)]);
+        return result;
+    }
 
     private void SeedLevel12Mushrooms(Board board, int playerCount)
     {

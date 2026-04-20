@@ -10,7 +10,7 @@ public enum RoundPhase
 /// <summary>
 /// Represents one game round (one level) across all registered players.
 /// In levels 1-8 each player gets their own Board instance.
-/// In levels 9-10 all players share a single Board instance.
+/// In levels 11-12 all players share a single Board instance.
 /// </summary>
 public class GameRound
 {
@@ -83,8 +83,8 @@ public class GameRound
         if (!IsSharedBoard)
             return _playerBoards.Keys.All(IsPlayerFinished);
 
-        // Shared board: all players dead or goal reached
+        // Shared board: all players dead or have reached the goal
         return _sharedBoard is null ||
-               !_sharedBoard.Players.Any(p => p.IsAlive);
+               !_sharedBoard.Players.Any(p => p.IsAlive && !p.HasReachedGoal);
     }
 }

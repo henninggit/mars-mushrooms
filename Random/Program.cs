@@ -162,6 +162,6 @@ static PossibleAction ChooseAction(GameStateView state, HashSet<(int, int)> unvi
     }
     else
     {
-        return nonWaitActions[random.Next(0, nonWaitActions.Count)];
+        return nonWaitActions[random.Next(nonWaitActions.Count)];
     }
 }
