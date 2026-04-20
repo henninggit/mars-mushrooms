@@ -7,5 +7,5 @@ namespace Marsville2.Domain.Items;
 /// </summary>
 public class HealthPack : IItem
 {
-    public string ItemType => "health";
+    public ItemType ItemType => ItemType.Health;
 }

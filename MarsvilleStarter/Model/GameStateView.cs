@@ -55,11 +55,11 @@ public sealed class GameStateView
     /// Mushrooms are <em>not</em> stored here — they are auto-collected and tracked via
     /// <see cref="MushroomsCollected"/>.
     /// </summary>
-    public IReadOnlyList<string> Inventory { get; }
+    public IReadOnlyList<ItemType> Inventory { get; }
 
-    /// <summary><c>true</c> when the backpack contains at least one "plank" and one "nail".</summary>
+    /// <summary><c>true</c> when the backpack contains at least one <see cref="ItemType.Plank"/> and one <see cref="ItemType.Nail"/>.</summary>
     public bool HasPlankAndNail =>
-        Inventory.Contains("plank") && Inventory.Contains("nail");
+        Inventory.Contains(ItemType.Plank) && Inventory.Contains(ItemType.Nail);
 
     // ---------------------------------------------------------------- vision
 

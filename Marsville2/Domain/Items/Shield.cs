@@ -7,5 +7,5 @@ namespace Marsville2.Domain.Items;
 /// </summary>
 public class Shield : IItem
 {
-    public string ItemType => "shield";
+    public ItemType ItemType => ItemType.Shield;
 }

@@ -9,5 +9,5 @@ namespace Marsville2.Domain.Items;
 /// </summary>
 public class PoisonMushroom : IItem
 {
-    public string ItemType => "poison_mushroom";
+    public ItemType ItemType => ItemType.PoisonMushroom;
 }

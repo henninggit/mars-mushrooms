@@ -35,6 +35,23 @@ public enum EntityType
 }
 
 /// <summary>
+/// The type of an item, matching the server's snake_case string values.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ItemType
+{
+    [JsonStringEnumMemberName("mushroom")]        Mushroom,
+    [JsonStringEnumMemberName("nail")]            Nail,
+    [JsonStringEnumMemberName("plank")]           Plank,
+    /// <summary>Restores HP to max on pickup. Not stored in the backpack.</summary>
+    [JsonStringEnumMemberName("health")]          Health,
+    /// <summary>Increases max health by 1 and heals 1 HP on pickup. Not stored in the backpack.</summary>
+    [JsonStringEnumMemberName("shield")]          Shield,
+    /// <summary>Lethal only when explicitly picked up — safe to step on.</summary>
+    [JsonStringEnumMemberName("poison_mushroom")] PoisonMushroom,
+}
+
+/// <summary>
 /// The action verb an agent can perform.
 /// </summary>
 public enum ActionType

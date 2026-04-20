@@ -16,8 +16,8 @@ public class CellView
     /// </summary>
     public CellType CellType { get; }
 
-    /// <summary>Items resting on this cell (e.g. "plank", "nail").</summary>
-    public IReadOnlyList<string> Items { get; }
+    /// <summary>Items resting on this cell (e.g. <see cref="ItemType.Plank"/>, <see cref="ItemType.Nail"/>).</summary>
+    public IReadOnlyList<ItemType> Items { get; }
 
     /// <summary>
     /// The entity standing on this cell, if any.
@@ -122,7 +122,7 @@ public class CellView
         if (isCurrentPosition)
         {
             // pickup — only non-mushroom items (mushrooms are collected automatically on step)
-            if (Items.Any(i => i != "mushroom"))
+            if (Items.Any(i => i != ItemType.Mushroom))
                 actions.Add(new PossibleAction(ActionType.Pickup, null, X, Y, $"Pick up item at ({X},{Y})"));
 
             // wait — always available at current position

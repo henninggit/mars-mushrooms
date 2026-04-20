@@ -2,12 +2,22 @@ using Marsville2.Domain;
 using Marsville2.Endpoints;
 using Marsville2.Hubs;
 using Marsville2.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ------------------------------------------------------------------ Services
 builder.Services.AddOpenApi();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+        options.PayloadSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.SnakeCaseLower)));
+
+// Serialize enums as snake_case strings (e.g. CellType.BrokenBridge → "broken_bridge")
+// so the JSON wire format stays backward-compatible with agents and the UI.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.SnakeCaseLower)));
 
 // CORS — allow the React UI (and any additional origins from config)
 var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>()

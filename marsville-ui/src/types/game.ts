@@ -1,11 +1,15 @@
 // Types mirroring C# DTOs from the game server
 
+export type ItemType = 'mushroom' | 'nail' | 'plank' | 'health' | 'shield' | 'poison_mushroom';
+export type EntityType = 'player' | 'enemy';
+export type CellType = 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal' | 'teleporter' | 'warning';
+
 export interface CellDto {
   x: number;
   y: number;
-  cellType: 'floor' | 'hole' | 'broken_bridge' | 'bridge' | 'low_obstacle' | 'wall' | 'goal' | 'teleporter' | 'warning';
-  items: string[];
-  entity?: { entityType: 'player' | 'enemy'; id: string; health: number } | null;
+  cellType: CellType;
+  items: ItemType[];
+  entity?: { entityType: EntityType; id: string; health: number } | null;
 }
 
 export interface BoardStateDto {
@@ -20,7 +24,7 @@ export interface BoardStateDto {
   mushroomsCollected: number;
   hasReachedGoal: boolean;
   roundScore: number;
-  backpack: string[];
+  backpack: ItemType[];
   visibleCells: CellDto[];
   boardWidth: number;
   boardHeight: number;

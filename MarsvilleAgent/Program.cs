@@ -23,6 +23,7 @@
 
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 const string DefaultServer = "http://localhost:5181";
 
@@ -198,7 +199,10 @@ static async Task<(GameState? state, bool unauthorized)> FetchState(HttpClient h
         if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             return (null, true);
         if (!resp.IsSuccessStatusCode) return (null, false);
-        var state = await resp.Content.ReadFromJsonAsync<GameState>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var state = await resp.Content.ReadFromJsonAsync<GameState>(new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
+        });
         return (state, false);
     }
     catch { return (null, false); }
@@ -227,7 +231,7 @@ record AgentAction(string Verb, int? Direction);
 
 record EntityDto(string EntityType, string Id, int Health);
 
-record CellDto(int X, int Y, string CellType, List<string> Items, EntityDto? Entity);
+record CellDto(int X, int Y, CellType CellType, List<ItemType> Items, EntityDto? Entity);
 
 record GameState(
     string PlayerId,
@@ -237,8 +241,38 @@ record GameState(
     int ShieldHealth,
     bool IsCrawling,
     int MushroomsCollected,
-    List<string> Backpack,
+    List<ItemType> Backpack,
     List<CellDto> VisibleCells,
     int BoardWidth, int BoardHeight,
     int Level
 );
+
+// ---------------------------------------------------------------------------
+// Enums
+
+/// <summary>Cell types as returned by the server (snake_case strings).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+enum CellType
+{
+    [JsonStringEnumMemberName("floor")]         Floor,
+    [JsonStringEnumMemberName("hole")]          Hole,
+    [JsonStringEnumMemberName("wall")]          Wall,
+    [JsonStringEnumMemberName("broken_bridge")] BrokenBridge,
+    [JsonStringEnumMemberName("bridge")]        Bridge,
+    [JsonStringEnumMemberName("low_obstacle")]  LowObstacle,
+    [JsonStringEnumMemberName("goal")]          Goal,
+    [JsonStringEnumMemberName("teleporter")]    Teleporter,
+    [JsonStringEnumMemberName("warning")]       Warning,
+}
+
+/// <summary>Item types as returned by the server (snake_case strings).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+enum ItemType
+{
+    [JsonStringEnumMemberName("mushroom")]        Mushroom,
+    [JsonStringEnumMemberName("nail")]            Nail,
+    [JsonStringEnumMemberName("plank")]           Plank,
+    [JsonStringEnumMemberName("health")]          Health,
+    [JsonStringEnumMemberName("shield")]          Shield,
+    [JsonStringEnumMemberName("poison_mushroom")] PoisonMushroom,
+}

@@ -7,7 +7,7 @@ public class BridgeCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => true;
     public override bool CanPlaceItems => true;
-    public override string CellType => "bridge";
+    public override CellType CellType => CellType.Bridge;
 
     public BridgeCell(int x, int y) : base(x, y) { }
 }

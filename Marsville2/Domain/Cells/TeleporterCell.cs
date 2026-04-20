@@ -15,7 +15,7 @@ public class TeleporterCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => true;
     public override bool CanPlaceItems => true;
-    public override string CellType => "teleporter";
+    public override CellType CellType => CellType.Teleporter;
 
     public TeleporterCell(int x, int y, int targetX, int targetY) : base(x, y)
     {

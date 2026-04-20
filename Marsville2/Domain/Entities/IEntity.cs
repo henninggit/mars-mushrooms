@@ -8,7 +8,7 @@ public interface IEntity
     int Health { get; }
     int MaxHealth { get; }
     bool IsAlive { get; }
-    string EntityType { get; }
+    EntityType EntityType { get; }
 
     /// <summary>Apply damage. Returns true if the entity dies.</summary>
     bool TakeDamage(int amount);

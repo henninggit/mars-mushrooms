@@ -10,7 +10,7 @@ public abstract class CellBase : ICell
     public abstract bool IsJumpable { get; }
     public abstract bool IsCrawlable { get; }
     public abstract bool CanPlaceItems { get; }
-    public abstract string CellType { get; }
+    public abstract CellType CellType { get; }
 
     // Items resting on this cell (e.g. planks, nails, mushrooms)
     public List<IItem> Items { get; } = new();

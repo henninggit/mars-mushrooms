@@ -19,7 +19,7 @@
  *    state.ShieldHealth            — bonus max health from collected shields
  *    state.IsCrawling
  *    state.MushroomsCollected
- *    state.Inventory               — backpack contents ("plank", "nail", ...)
+ *    state.Inventory               — backpack contents (ItemType.Plank, ItemType.Nail, …)
  *    state.HasPlankAndNail         — true when backpack has plank + nail
  *    state.VisibleCells            — all cells within vision radius
  *    state.GetCurrentCell()        — cell the agent stands on

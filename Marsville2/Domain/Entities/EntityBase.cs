@@ -8,7 +8,7 @@ public abstract class EntityBase : IEntity
     public int Health { get; protected set; }
     public abstract int MaxHealth { get; }
     public bool IsAlive => Health > 0;
-    public abstract string EntityType { get; }
+    public abstract EntityType EntityType { get; }
 
     protected EntityBase(string id, int x, int y, int health)
     {

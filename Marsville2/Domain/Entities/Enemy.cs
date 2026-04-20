@@ -8,7 +8,7 @@ namespace Marsville2.Domain.Entities;
 public class Enemy : EntityBase
 {
     public override int MaxHealth => 1;
-    public override string EntityType => "enemy";
+    public override EntityType EntityType => EntityType.Enemy;
 
     public Enemy(string id, int x, int y) : base(id, x, y, health: 1) { }
 }

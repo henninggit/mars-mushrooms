@@ -10,7 +10,7 @@ public class GoalCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => true;
     public override bool CanPlaceItems => true;
-    public override string CellType => "goal";
+    public override CellType CellType => CellType.Goal;
 
     public GoalCell(int x, int y) : base(x, y) { }
 }

@@ -7,5 +7,5 @@ namespace Marsville2.Domain.Items;
 /// </summary>
 public class Mushroom : IItem
 {
-    public string ItemType => "mushroom";
+    public ItemType ItemType => ItemType.Mushroom;
 }

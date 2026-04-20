@@ -7,7 +7,7 @@ public class WallCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => false;
     public override bool CanPlaceItems => false;
-    public override string CellType => "wall";
+    public override CellType CellType => CellType.Wall;
 
     public WallCell(int x, int y) : base(x, y) { }
 }

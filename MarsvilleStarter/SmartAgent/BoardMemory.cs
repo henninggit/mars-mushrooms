@@ -65,13 +65,13 @@ public sealed class BoardMemory
     /// Returns all memorized cells that have a mushroom.
     /// </summary>
     public IEnumerable<CellView> GetMushroomCells() =>
-        _cells.Values.Where(c => c.Items.Contains("mushroom"));
+        _cells.Values.Where(c => c.Items.Contains(ItemType.Mushroom));
 
     /// <summary>
     /// Returns all memorized cells with plank or nail.
     /// </summary>
     public IEnumerable<CellView> GetHammerNailCells() =>
-        _cells.Values.Where(c => c.Items.Any(i => i is "plank" or "nail"));
+        _cells.Values.Where(c => c.Items.Any(i => i is ItemType.Plank or ItemType.Nail));
 
     public bool HasSeenCell(int x, int y) => _cells.ContainsKey((x, y));
 

@@ -7,7 +7,7 @@ public class HoleCell : CellBase
     public override bool IsJumpable => true; // the hole itself is the thing being jumped over
     public override bool IsCrawlable => false;
     public override bool CanPlaceItems => false;
-    public override string CellType => "hole";
+    public override CellType CellType => CellType.Hole;
 
     public HoleCell(int x, int y) : base(x, y) { }
 }

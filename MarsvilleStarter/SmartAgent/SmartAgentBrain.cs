@@ -36,10 +36,10 @@ public sealed class SmartAgentBrain
         var currentCell = state.GetCurrentCell();
         if (currentCell?.HasItems == true)
         {
-            bool hasShield = currentCell.Items.Contains("shield");
-            bool hasHealth = currentCell.Items.Contains("health") && state.Health < state.MaxHealth;
-            bool hasMaterials = currentCell.Items.Any(i => i is "plank" or "nail");
-            bool hasMushrooms = currentCell.Items.Any(i => i is "mushroom");
+            bool hasShield = currentCell.Items.Contains(ItemType.Shield);
+            bool hasHealth = currentCell.Items.Contains(ItemType.Health) && state.Health < state.MaxHealth;
+            bool hasMaterials = currentCell.Items.Any(i => i is ItemType.Plank or ItemType.Nail);
+            bool hasMushrooms = currentCell.Items.Any(i => i is ItemType.Mushroom);
             if (hasShield || hasHealth || hasMaterials || hasMushrooms)
             {
                 var pickup = options.FirstOrDefault(a => a.ActionType == ActionType.Pickup);
@@ -58,8 +58,8 @@ public sealed class SmartAgentBrain
         // 5. Route to nearest item
         {
             var easyGrabItemCells = _memory.GetCellsWithItems()
-                .Where(x => !x.Items.All(x => x == "health") || state.Health < state.MaxHealth)
-                .Where(x => !x.Items.All(x => x == "poison_mushroom"))
+                .Where(x => !x.Items.All(x => x == ItemType.Health) || state.Health < state.MaxHealth)
+                .Where(x => !x.Items.All(x => x == ItemType.PoisonMushroom))
                 .Select(c => (c.X, c.Y))
                 .Where(x => Math.Abs(x.X - state.X) + Math.Abs(x.Y - state.Y) < 2).ToList();
 

@@ -19,7 +19,7 @@ public record CellDto(
     [property: JsonPropertyName("x")]        int           X,
     [property: JsonPropertyName("y")]        int           Y,
     [property: JsonPropertyName("cellType")] CellType      CellType,
-    [property: JsonPropertyName("items")]    List<string>  Items,
+    [property: JsonPropertyName("items")]    List<ItemType> Items,
     [property: JsonPropertyName("entity")]   EntityDto?    Entity
 );
 
@@ -37,7 +37,7 @@ public record GameStateDto(
     [property: JsonPropertyName("shieldHealth")]        int           ShieldHealth,
     [property: JsonPropertyName("isCrawling")]          bool          IsCrawling,
     [property: JsonPropertyName("mushroomsCollected")]  int           MushroomsCollected,
-    [property: JsonPropertyName("backpack")]            List<string>  Backpack,
+    [property: JsonPropertyName("backpack")]            List<ItemType> Backpack,
     [property: JsonPropertyName("visibleCells")]        List<CellDto> VisibleCells,
     [property: JsonPropertyName("boardWidth")]          int           BoardWidth,
     [property: JsonPropertyName("boardHeight")]         int           BoardHeight,

@@ -8,5 +8,5 @@ public interface ICell
     bool IsJumpable { get; }
     bool IsCrawlable { get; }
     bool CanPlaceItems { get; }
-    string CellType { get; }
+    CellType CellType { get; }
 }

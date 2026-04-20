@@ -7,7 +7,7 @@ public class FloorCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => true;
     public override bool CanPlaceItems => true;
-    public override string CellType => "floor";
+    public override CellType CellType => CellType.Floor;
 
     public FloorCell(int x, int y) : base(x, y) { }
 }

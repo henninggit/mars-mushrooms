@@ -11,7 +11,7 @@ public class BrokenBridgeCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => false;
     public override bool CanPlaceItems => false;
-    public override string CellType => "broken_bridge";
+    public override CellType CellType => CellType.BrokenBridge;
 
     public BrokenBridgeCell(int x, int y) : base(x, y) { }
 }

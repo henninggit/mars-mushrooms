@@ -8,7 +8,7 @@ namespace Marsville2.Domain.Entities;
 public class Player : EntityBase
 {
     public override int MaxHealth => _maxHealth;
-    public override string EntityType => "player";
+    public override EntityType EntityType => EntityType.Player;
 
     public string TeamName { get; }
     public string Token { get; }

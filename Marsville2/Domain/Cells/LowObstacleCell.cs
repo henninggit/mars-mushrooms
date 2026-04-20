@@ -10,7 +10,7 @@ public class LowObstacleCell : CellBase
     public override bool IsJumpable => false;
     public override bool IsCrawlable => true;
     public override bool CanPlaceItems => false;
-    public override string CellType => "low_obstacle";
+    public override CellType CellType => CellType.LowObstacle;
 
     public LowObstacleCell(int x, int y) : base(x, y) { }
 }
